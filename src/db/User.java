@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class User {
     int id;
@@ -17,6 +18,7 @@ public class User {
     String resume_address;
     int hourly_compensation;
     boolean is_verified;
+    Date subscription_ends;
 
     public User(
             int id,
@@ -28,7 +30,8 @@ public class User {
             String logo_address,
             String resume_address,
             int hourly_compensation,
-            boolean is_verified
+            boolean is_verified,
+            Date subscription_ends
     ) {
         this.id = id;
         this.username = username;
@@ -40,6 +43,7 @@ public class User {
         this.resume_address = resume_address;
         this.hourly_compensation = hourly_compensation;
         this.is_verified = is_verified;
+        this.subscription_ends = subscription_ends;
     }
 
     public static ArrayList<User> all(Connection db) throws SQLException {
@@ -58,7 +62,8 @@ public class User {
                 String resume_address = rs.getString("resume_address");
                 int hourly_compensation = rs.getInt("hourly_compensation");
                 boolean is_verified = rs.getBoolean("is_verified");
-                items.add(new User(id, username, encrypted_password, user_type, name, website, logo_address, resume_address, hourly_compensation, is_verified));
+                Date subscription_ends = rs.getTimestamp("subscription_ends");
+                items.add(new User(id, username, encrypted_password, user_type, name, website, logo_address, resume_address, hourly_compensation, is_verified, subscription_ends));
             }
         }
         return items;

@@ -8,5 +8,10 @@ CREATE TABLE user (
     logo_address varchar(255),
     resume_address varchar(255),
     hourly_compensation int,
-    is_verified bool
+    is_verified bool,
+    subscription_ends TIMESTAMP
 );
+
+/*
+INSERT INTO user (username, encrypted_password, user_type, name, website, logo_address, resume_address, hourly_compensation, is_verified, subscription_ends) values ("moein", "12345", "C", "test", "test.com", "logo.png", "resume.pdf", 40, true, "2022-10-25 09:21:01");
+*/
