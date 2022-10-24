@@ -19,6 +19,8 @@ public class Main {
         Transaction t = Transaction.get_by_id(db, 1);
         Message m = Message.get_by_id(db, 1);
         Feedback f = Feedback.get_by_id(db, 1);
+        Keyword k = Keyword.get_by_id(db, 1);
+        UserKeyword uk = UserKeyword.get_by_id(db, 2, 1);
         System.out.println();
     }
 }

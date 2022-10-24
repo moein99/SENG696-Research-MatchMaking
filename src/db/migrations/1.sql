@@ -15,6 +15,23 @@ CREATE TABLE user (
 
 -- INSERT INTO user (username, encrypted_password, user_type, name, website, logo_address, resume_address, hourly_compensation, is_verified, subscription_ends, balance) values ("moein", "12345", "C", "test", "test.com", "logo.png", "resume.pdf", 40, true, "2022-10-25 09:21:01", 5);
 
+CREATE TABLE keyword (
+    id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    text varchar (255) NOT NULL
+);
+
+-- INSERT INTO keyword (text) values ("scraping");
+
+CREATE TABLE userKeyword (
+    user_id int NOT NULL,
+    keyword_id int NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id),
+    FOREIGN KEY (keyword_id) REFERENCES keyword(id),
+    CONSTRAINT pk_user_keyword PRIMARY KEY (user_id, keyword_id)
+);
+
+-- INSERT INTO userKeyword (user_id, keyword_id) values (2, 1);
+
 CREATE TABLE project (
     id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
     owner_id int NOT NULL,
