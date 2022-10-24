@@ -8,17 +8,18 @@ import java.util.ArrayList;
 import java.util.Date;
 
 public class User {
-    int id;
-    String username;
-    String encrypted_password;
-    String user_type;
-    String name;
-    String website;
-    String logo_address;
-    String resume_address;
-    int hourly_compensation;
-    boolean is_verified;
-    Date subscription_ends;
+    public int id;
+    public String username;
+    public String encrypted_password;
+    public String user_type;
+    public String name;
+    public String website;
+    public String logo_address;
+    public String resume_address;
+    public int hourly_compensation;
+    public boolean is_verified;
+    public Date subscription_ends;
+    public int balance;
 
     public User(
             int id,
@@ -31,7 +32,8 @@ public class User {
             String resume_address,
             int hourly_compensation,
             boolean is_verified,
-            Date subscription_ends
+            Date subscription_ends,
+            int balance
     ) {
         this.id = id;
         this.username = username;
@@ -44,6 +46,7 @@ public class User {
         this.hourly_compensation = hourly_compensation;
         this.is_verified = is_verified;
         this.subscription_ends = subscription_ends;
+        this.balance = balance;
     }
 
     public static ArrayList<User> all(Connection db) throws SQLException {
@@ -63,7 +66,8 @@ public class User {
                 int hourly_compensation = rs.getInt("hourly_compensation");
                 boolean is_verified = rs.getBoolean("is_verified");
                 Date subscription_ends = rs.getTimestamp("subscription_ends");
-                items.add(new User(id, username, encrypted_password, user_type, name, website, logo_address, resume_address, hourly_compensation, is_verified, subscription_ends));
+                int balance = rs.getInt("balance");
+                items.add(new User(id, username, encrypted_password, user_type, name, website, logo_address, resume_address, hourly_compensation, is_verified, subscription_ends, balance));
             }
         }
         return items;
