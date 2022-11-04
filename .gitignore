@@ -5,6 +5,8 @@
 *.log
 .idea/
 out/
+APDescription.txt
+MTPs-Main-Container.txt
 # BlueJ files
 *.ctxt
 

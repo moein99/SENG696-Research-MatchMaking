@@ -1,5 +1,7 @@
 package src.UI;
 
+import src.agents.UIAgent;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -11,8 +13,10 @@ public class Login implements ActionListener {
     JPasswordField password;
     JButton login;
     JLabel response;
+    UIAgent uiAgent;
 
-    public Login() {
+    public Login(UIAgent uiAgent) {
+        this.uiAgent = uiAgent;
         base = new GridBase(7, 3);
 
         username = new JTextField();

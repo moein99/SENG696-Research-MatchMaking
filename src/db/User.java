@@ -1,11 +1,12 @@
 package src.db;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import org.json.JSONObject;
+
+import java.security.NoSuchAlgorithmException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
+import java.security.MessageDigest;
 
 public class User {
     public int id;
@@ -21,19 +22,22 @@ public class User {
     public Date subscription_ends;
     public int balance;
 
+    public final static String CLIENT_TYPE = "C";
+    public final static String PROVIDER_TYPE = "P";
+
     public User(
-            int id,
-            String username,
-            String encrypted_password,
-            String user_type,
-            String name,
-            String website,
-            String logo_address,
-            String resume_address,
-            int hourly_compensation,
-            boolean is_verified,
-            Date subscription_ends,
-            int balance
+        int id,
+        String username,
+        String encrypted_password,
+        String user_type,
+        String name,
+        String website,
+        String logo_address,
+        String resume_address,
+        int hourly_compensation,
+        boolean is_verified,
+        Date subscription_ends,
+        int balance
     ) {
         this.id = id;
         this.username = username;
@@ -71,5 +75,48 @@ public class User {
             }
         }
         return items;
+    }
+
+    public static JSONObject signupClient(Connection db, JSONObject data) {
+        long user_id = -1;
+        JSONObject obj = new JSONObject();
+        String username = data.getString("username");
+        String password = data.getString("password");
+        String query = "INSERT INTO user (username, encrypted_password, user_type) VALUES (?,?,?)";
+
+        try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
+            st.setString(1, username);
+            st.setString(2, getHash(password));
+            st.setString(3, CLIENT_TYPE);
+            int rows = st.executeUpdate();
+            if (rows > 0) {
+                try (ResultSet rs = st.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        user_id = rs.getInt(1);
+                        System.out.println(user_id);
+                    }
+                } catch (SQLException ex) {
+                    System.out.println(ex.getMessage());
+                }
+            }
+        } catch (SQLException ex) {
+            if (ex.getMessage().contains("Duplicate")) {
+                obj.put("message", "The username already exists");
+            }
+        }
+        obj.put("id", user_id);
+
+        return obj;
+    }
+
+    public static String getHash(String input) {
+        MessageDigest messageDigest = null;
+        try {
+            messageDigest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        messageDigest.update(input.getBytes());
+        return new String(messageDigest.digest());
     }
 }

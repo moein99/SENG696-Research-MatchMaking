@@ -1,5 +1,7 @@
 package src.UI;
 
+import src.agents.UIAgent;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -18,8 +20,10 @@ public class SignupProvider implements ActionListener {
     JTextField keywords;
     JButton signup;
     JLabel response;
+    UIAgent uiAgent;
 
-    public SignupProvider() {
+    public SignupProvider(UIAgent uiAgent) {
+        this.uiAgent = uiAgent;
         base = new GridBase(12, 3);
         username = new JTextField();
         password = new JPasswordField();

@@ -1,5 +1,7 @@
 package src.UI;
 
+import src.agents.UIAgent;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,7 +11,9 @@ public class Launch implements ActionListener {
     JButton loginButton;
     JButton signupClientButton;
     JButton signupProviderButton;
-    public Launch() {
+    UIAgent uiAgent;
+    public Launch(UIAgent uiAgent) {
+        this.uiAgent = uiAgent;
         base = new GridBase(6, 3);
 
         loginButton = new JButton("Login");
@@ -32,13 +36,13 @@ public class Launch implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == loginButton) {
             base.frame.dispose();
-            new Login();
+            new Login(uiAgent);
         } else if (e.getSource() == signupClientButton) {
             base.frame.dispose();
-            new SignupClient();
+            new SignupClient(uiAgent);
         } else if (e.getSource() == signupProviderButton) {
             base.frame.dispose();
-            new SignupProvider();
+            new SignupProvider(uiAgent);
         }
     }
 }

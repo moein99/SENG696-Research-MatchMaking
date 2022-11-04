@@ -1,6 +1,6 @@
 CREATE TABLE user (
     id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    username varchar(255) NOT NULL,
+    username varchar(255) NOT NULL UNIQUE,
     encrypted_password varchar(255) NOT NULL ,
     user_type varchar(255) NOT NULL DEFAULT "C",
     name varchar(255),
