@@ -50,4 +50,32 @@ public class UIAgent extends BaseAgent {
         }
 
     }
+
+    public boolean call_for_login(String username, String password) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("username", username);
+        jsonObject.put("password", password);
+        StringWriter out = new StringWriter();
+        jsonObject.write(out);
+
+        this.sendMessage(
+                out.toString(),
+                Constants.loginConversationID,
+                ACLMessage.REQUEST,
+                searchForService(Constants.profileServiceName)
+        );
+
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                MessageTemplate.MatchConversationId(Constants.loginConversationID)
+        );
+
+        ACLMessage message = blockingReceive(template);
+        if (message != null) {
+            jsonObject = new JSONObject(message.getContent());
+            return jsonObject.getBoolean("status");
+        }
+
+        return false;
+    }
 }

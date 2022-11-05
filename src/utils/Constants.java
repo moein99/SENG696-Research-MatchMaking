@@ -7,6 +7,7 @@ public class Constants {
 
     // Conversation IDs
     public static final String signupConversationID = "signup";
+    public static final String loginConversationID = "login";
 
     // Messages
     public static final String noResponseMessage = "no response";

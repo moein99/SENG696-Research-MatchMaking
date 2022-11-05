@@ -109,6 +109,32 @@ public class User {
         return obj;
     }
 
+    public static JSONObject isCredentialsValid(Connection db, JSONObject data) {
+        JSONObject obj = new JSONObject();
+        int rows = 0;
+        obj.put("status", false);
+
+        String username = data.getString("username");
+        String password = data.getString("password");
+        String query = "SELECT * FROM user WHERE username=? AND encrypted_password=?";
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            st.setString(1, username);
+            st.setString(2, getHash(password));
+            ResultSet rs = st.executeQuery();
+            if (rs.last()) {
+                rows = rs.getRow();
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+
+        if (rows != 0) {
+            obj.put("status", true);
+            return obj;
+        }
+        return obj;
+    }
+
     public static String getHash(String input) {
         MessageDigest messageDigest = null;
         try {

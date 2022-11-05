@@ -26,9 +26,9 @@ public class Launch implements ActionListener {
         signupClientButton.addActionListener(this);
         signupProviderButton.addActionListener(this);
 
-        base.panels[2][1].add(loginButton);
-        base.panels[3][1].add(signupClientButton);
-        base.panels[4][1].add(signupProviderButton);
+        base.centerPanels[2][1].add(loginButton);
+        base.centerPanels[3][1].add(signupClientButton);
+        base.centerPanels[4][1].add(signupProviderButton);
         base.frame.setVisible(true);
     }
 

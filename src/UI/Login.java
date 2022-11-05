@@ -9,40 +9,54 @@ import java.awt.event.ActionListener;
 
 public class Login implements ActionListener {
     GridBase base;
-    JTextField username;
-    JPasswordField password;
+    JTextField usernameField;
+    JPasswordField passwordField;
     JButton login;
-    JLabel response;
+    JLabel responseLabel;
     UIAgent uiAgent;
+
 
     public Login(UIAgent uiAgent) {
         this.uiAgent = uiAgent;
         base = new GridBase(7, 3);
 
-        username = new JTextField();
-        password = new JPasswordField();
-        response = new JLabel();
-        response.setForeground(Color.RED);
-        username.setFont(new Font("Consolas", Font.PLAIN, 25));
-        password.setFont(new Font("Consolas", Font.PLAIN, 25));
+        usernameField = new JTextField();
+        passwordField = new JPasswordField();
+        responseLabel = new JLabel();
+        responseLabel.setForeground(Color.RED);
+        usernameField.setFont(new Font("Consolas", Font.PLAIN, 25));
+        passwordField.setFont(new Font("Consolas", Font.PLAIN, 25));
+        responseLabel.setFont(new Font("Consolas", Font.PLAIN, 15));
         login = new JButton("Login");
         login.setFocusable(false);
         login.addActionListener(this);
 
-        base.panels[2][1].add(username);
-        base.panels[2][0].add(new JLabel("Username:"), BorderLayout.EAST);
-        base.panels[3][1].add(password);
-        base.panels[3][0].add(new JLabel("Password:"), BorderLayout.EAST);
-        base.panels[4][1].add(login);
-        base.panels[5][1].add(response, BorderLayout.CENTER);
+        base.centerPanels[2][1].add(usernameField);
+        base.centerPanels[2][0].add(new JLabel("Username:"), BorderLayout.EAST);
+        base.centerPanels[3][1].add(passwordField);
+        base.centerPanels[3][0].add(new JLabel("Password:"), BorderLayout.EAST);
+        base.centerPanels[4][1].add(login);
+        base.centerPanels[5][1].add(responseLabel, BorderLayout.CENTER);
+        base.backButton.addActionListener(this);
+        base.topPanels[0][0].add(base.backButton);
+
         base.frame.setVisible(true);
     }
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == login) {
-            System.out.println(username.getText());
-            System.out.println(password.getPassword());
-            response.setText("Wrong Password!");
+            String username = usernameField.getText();
+            char[] password = passwordField.getPassword();
+
+            boolean successful = uiAgent.call_for_login(username, String.valueOf(password));
+            if (successful) {
+                responseLabel.setText("success");
+            } else {
+                responseLabel.setText("Credentials are not valid");
+            }
+        } else if (e.getSource() == base.backButton) {
+            base.frame.dispose();
+            new Launch(uiAgent);
         }
     }
 }

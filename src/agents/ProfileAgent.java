@@ -28,6 +28,7 @@ public class ProfileAgent extends BaseAgent {
             throw new RuntimeException(e);
         }
         addBehaviour(new SignupBehaviour(this, 100));
+        addBehaviour(new LoginBehaviour(this, 100));
     }
 }
 
@@ -53,6 +54,35 @@ class SignupBehaviour extends TickerBehaviour {
             myAgent.sendMessage(
                     response.toString(),
                     Constants.signupConversationID,
+                    ACLMessage.INFORM,
+                    myAgent.searchForService(Constants.UIServiceName)
+            );
+        }
+    }
+}
+
+class LoginBehaviour extends TickerBehaviour {
+    private ProfileAgent myAgent;
+
+    public LoginBehaviour(Agent a, long period) {
+        super(a, period);
+        myAgent = (ProfileAgent) a;
+    }
+
+    @Override
+    protected void onTick() {
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                MessageTemplate.MatchConversationId(Constants.loginConversationID)
+        );
+
+        ACLMessage message = myAgent.receive(template);
+        if (message != null) {
+            JSONObject data = new JSONObject(message.getContent());
+            JSONObject response = User.isCredentialsValid(myAgent.db, data);
+            myAgent.sendMessage(
+                    response.toString(),
+                    Constants.loginConversationID,
                     ACLMessage.INFORM,
                     myAgent.searchForService(Constants.UIServiceName)
             );

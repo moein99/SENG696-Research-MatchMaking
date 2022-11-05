@@ -35,19 +35,27 @@ public class SignupClient implements ActionListener {
         signup.setFocusable(false);
         signup.addActionListener(this);
 
-        base.panels[2][1].add(usernameInput);
-        base.panels[2][0].add(new JLabel("Username:"), BorderLayout.EAST);
-        base.panels[3][1].add(passwordInput);
-        base.panels[3][0].add(new JLabel("Password:"), BorderLayout.EAST);
-        base.panels[4][1].add(passwordConfirmationInput);
-        base.panels[4][0].add(new JLabel("Confirm Password:"), BorderLayout.EAST);
-        base.panels[5][1].add(signup);
-        base.panels[6][1].add(responseLabel, BorderLayout.CENTER);
+        base.centerPanels[2][1].add(usernameInput);
+        base.centerPanels[2][0].add(new JLabel("Username:"), BorderLayout.EAST);
+        base.centerPanels[3][1].add(passwordInput);
+        base.centerPanels[3][0].add(new JLabel("Password:"), BorderLayout.EAST);
+        base.centerPanels[4][1].add(passwordConfirmationInput);
+        base.centerPanels[4][0].add(new JLabel("Confirm Password:"), BorderLayout.EAST);
+        base.centerPanels[5][1].add(signup);
+        base.centerPanels[6][1].add(responseLabel, BorderLayout.CENTER);
+
+        base.backButton.addActionListener(this);
+        base.topPanels[0][0].add(base.backButton);
+
         base.frame.setVisible(true);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == base.backButton) {
+            base.frame.dispose();
+            new Launch(uiAgent);
+        }
         if (e.getSource() == signup) {
             String username = usernameInput.getText();
             char[] password = passwordInput.getPassword();

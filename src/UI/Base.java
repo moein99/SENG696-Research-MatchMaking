@@ -17,7 +17,7 @@ public class Base extends JFrame {
         frame.setSize(1200, 800);
         frame.setTitle("Matchmaking");
         frame.setLocationRelativeTo(null);
-        frame.setLayout(new BorderLayout());
+        frame.setLayout(new BorderLayout(20, 20));
 
         leftPanel = new JPanel();
         topPanel = new JPanel();
@@ -30,6 +30,8 @@ public class Base extends JFrame {
         rightPanel.setPreferredSize(new Dimension(100, 100));
         bottomPanel.setPreferredSize(new Dimension(100, 100));
         centerPanel.setPreferredSize(new Dimension(100, 100));
+
+        topPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         frame.add(leftPanel, BorderLayout.WEST);
         frame.add(topPanel, BorderLayout.NORTH);
