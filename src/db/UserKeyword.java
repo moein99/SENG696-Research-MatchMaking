@@ -1,9 +1,8 @@
 package src.db;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import org.json.JSONObject;
+
+import java.sql.*;
 import java.util.Date;
 
 public class UserKeyword {
@@ -15,16 +14,25 @@ public class UserKeyword {
         this.keyword_id = keyword_id;
     }
 
-    public static UserKeyword get_by_id(Connection db, int usr_id, int kw_id) throws SQLException {
-        String query = "select * from userKeyword where user_id=" + usr_id + " AND keyword_id=" + kw_id;
-        try (Statement st = db.createStatement()) {
-            ResultSet rs = st.executeQuery(query);
-            while (rs.next()) {
-                int user_id = rs.getInt("user_id");
-                int keyword_id = rs.getInt("keyword_id");
-                return new UserKeyword(user_id, keyword_id);
+    public static JSONObject insert(Connection db, String userId, String keywordId) {
+        String query = "INSERT INTO userKeyword (user_id, keyword_id) VALUES (?,?)";
+
+        long userIdFromDB = -1;
+        long keywordIdFromDB = -1;
+        JSONObject obj = new JSONObject();
+
+        try (PreparedStatement st = db.prepareStatement(query)) {
+            st.setString(1, userId);
+            st.setString(2, keywordId);
+            st.executeUpdate();
+        } catch (SQLException ex) {
+            if (ex.getMessage().contains("Duplicate")) {
+                obj.put("message", "The UserKeyword already exists");
             }
         }
-        return null;
+
+        obj.put("user_id", userIdFromDB);
+        obj.put("keyword_id", keywordIdFromDB);
+        return obj;
     }
 }

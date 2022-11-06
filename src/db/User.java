@@ -1,9 +1,12 @@
 package src.db;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.security.MessageDigest;
@@ -93,7 +96,7 @@ public class User {
                 try (ResultSet rs = st.getGeneratedKeys()) {
                     if (rs.next()) {
                         user_id = rs.getInt(1);
-                        System.out.println(user_id);
+                        System.out.println("user inserted, id: " + user_id);
                     }
                 } catch (SQLException ex) {
                     System.out.println(ex.getMessage());
@@ -109,10 +112,67 @@ public class User {
         return obj;
     }
 
-    public static JSONObject isCredentialsValid(Connection db, JSONObject data) {
+    public static JSONObject signupProvider(Connection db, JSONObject data) {
+        long userId = -1;
         JSONObject obj = new JSONObject();
+        String username = data.getString("username");
+        String password = data.getString("password");
+        String nameField = data.getString("name");
+        String website = data.getString("website");
+        String logoAddress = data.getString("logoAddress");
+        String resumeAddress = data.getString("resumeAddress");
+        String hourlyCompensation = data.getString("hourlyCompensation");
+        ArrayList<String> keywords = convertJsonArrayToArrayList(data.getJSONArray("keywords"));
+        String query = "INSERT INTO user (username, encrypted_password, user_type, name, website, logo_address, resume_address, hourly_compensation, is_verified) VALUES (?,?,?,?,?,?,?,?,?)";
+
+        try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
+            st.setString(1, username);
+            st.setString(2, getHash(password));
+            st.setString(3, CLIENT_TYPE);
+            st.setString(4, nameField);
+            st.setString(5, website);
+            st.setString(6, logoAddress);
+            st.setString(7, resumeAddress);
+            st.setString(8, hourlyCompensation);
+            st.setBoolean(9, false);
+            int rows = st.executeUpdate();
+            if (rows > 0) {
+                try (ResultSet rs = st.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        userId = rs.getInt(1);
+                        System.out.println("user inserted, id: " + userId);
+                    }
+                } catch (SQLException ex) {
+                    System.out.println(ex.getMessage());
+                }
+            }
+        } catch (SQLException ex) {
+            if (ex.getMessage().contains("Duplicate")) {
+                obj.put("message", "The username already exists");
+            }
+        }
+        obj.put("id", userId);
+        setProviderKeywords(db, keywords, userId);
+
+        return obj;
+    }
+
+    private static void setProviderKeywords(Connection db, ArrayList<String> keywords, long userId) {
+        for (String keywordText : keywords) {
+            Keyword keyword = Keyword.get_by_text(db, keywordText);
+            if (keyword == null) {
+                Keyword.insert(db, keywordText);
+                keyword = Keyword.get_by_text(db, keywordText);
+            }
+            UserKeyword.insert(db, String.valueOf(userId), String.valueOf(keyword.id));
+        }
+    }
+
+    public static JSONObject login(Connection db, JSONObject data) {
+        JSONObject userFields = null;
+
         int rows = 0;
-        obj.put("status", false);
+        ResultSet rs;
 
         String username = data.getString("username");
         String password = data.getString("password");
@@ -120,19 +180,60 @@ public class User {
         try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
             st.setString(1, username);
             st.setString(2, getHash(password));
-            ResultSet rs = st.executeQuery();
+            rs = st.executeQuery();
             if (rs.last()) {
                 rows = rs.getRow();
+            }
+            if (rows != 0) {
+                rs.first();
+                userFields = sqlToJSON(rs);
             }
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
         }
 
-        if (rows != 0) {
-            obj.put("status", true);
-            return obj;
+        return userFields;
+    }
+
+    private static JSONObject sqlToJSON(ResultSet rs) throws SQLException {
+        JSONObject fields = new JSONObject();
+        fields.put("id", rs.getInt("id"));
+        fields.put("username", rs.getString("username"));
+        fields.put("encrypted_password", rs.getString("encrypted_password"));
+        fields.put("user_type", rs.getString("user_type"));
+        fields.put("name", rs.getString("name"));
+        fields.put("website", rs.getString("website"));
+        fields.put("logo_address", rs.getString("logo_address"));
+        fields.put("resume_address", rs.getString("resume_address"));
+        fields.put("hourly_compensation", rs.getInt("hourly_compensation"));
+        fields.put("is_verified", rs.getBoolean("is_verified"));
+        fields.put("subscription_ends", rs.getString("subscription_ends"));
+        fields.put("balance", rs.getInt("balance"));
+        return fields;
+    }
+
+    public static User JSONtoModel(JSONObject obj) throws ParseException {
+        int id = obj.getInt("id");
+        String username = obj.getString("username");
+        String encryptedPassword = obj.getString("encrypted_password");
+        String userType = obj.getString("user_type");
+        String name = obj.has("name") ? obj.getString("name") : null;
+        String website = obj.has("website") ? obj.getString("name") : null;
+        String logoAddress = obj.has("logo_address") ? obj.getString("name") : null;
+        String resumeAddress = obj.has("resume_address") ? obj.getString("name") : null;
+        int hourlyCompensation = obj.getInt("hourly_compensation");
+        boolean isVerified = obj.getBoolean("is_verified");
+        Date subscriptionEnds = convertStringToDate(obj.has("subscription_ends") ? obj.getString("name") : null);
+        int balance = obj.getInt("balance");
+
+        return new User(id, username, encryptedPassword, userType, name, website, logoAddress, resumeAddress, hourlyCompensation, isVerified, subscriptionEnds, balance);
+    }
+
+    private static Date convertStringToDate(String date) throws ParseException {
+        if (date == null) {
+            return null;
         }
-        return obj;
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(date);
     }
 
     public static String getHash(String input) {
@@ -144,5 +245,13 @@ public class User {
         }
         messageDigest.update(input.getBytes());
         return new String(messageDigest.digest());
+    }
+
+    private static ArrayList<String> convertJsonArrayToArrayList(JSONArray array) {
+        ArrayList<String> data = new ArrayList<>();
+        for (int i = 0; i < array.length(); i++) {
+            data.add(array.getString(i));
+        }
+        return data;
     }
 }

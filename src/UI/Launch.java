@@ -11,6 +11,7 @@ public class Launch implements ActionListener {
     JButton loginButton;
     JButton signupClientButton;
     JButton signupProviderButton;
+    JButton viewAsGuestButton;
     UIAgent uiAgent;
     public Launch(UIAgent uiAgent) {
         this.uiAgent = uiAgent;
@@ -19,16 +20,20 @@ public class Launch implements ActionListener {
         loginButton = new JButton("Login");
         signupClientButton = new JButton("Signup as a Client");
         signupProviderButton = new JButton("Signup as a Provider");
+        viewAsGuestButton = new JButton("View as a Guest");
         loginButton.setFocusable(false);
         signupClientButton.setFocusable(false);
         signupProviderButton.setFocusable(false);
+        viewAsGuestButton.setFocusable(false);
         loginButton.addActionListener(this);
         signupClientButton.addActionListener(this);
         signupProviderButton.addActionListener(this);
+        viewAsGuestButton.addActionListener(this);
 
-        base.centerPanels[2][1].add(loginButton);
-        base.centerPanels[3][1].add(signupClientButton);
-        base.centerPanels[4][1].add(signupProviderButton);
+        base.centerPanels[1][1].add(loginButton);
+        base.centerPanels[2][1].add(signupClientButton);
+        base.centerPanels[3][1].add(signupProviderButton);
+        base.centerPanels[4][1].add(viewAsGuestButton);
         base.frame.setVisible(true);
     }
 
@@ -43,6 +48,9 @@ public class Launch implements ActionListener {
         } else if (e.getSource() == signupProviderButton) {
             base.frame.dispose();
             new SignupProvider(uiAgent);
+        } else if (e.getSource() == viewAsGuestButton) {
+            base.frame.dispose();
+            new Home(uiAgent, null);
         }
     }
 }

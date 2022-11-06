@@ -1,11 +1,13 @@
 package src.UI;
 
 import src.agents.UIAgent;
+import src.db.User;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.ParseException;
 
 public class Login implements ActionListener {
     GridBase base;
@@ -48,9 +50,15 @@ public class Login implements ActionListener {
             String username = usernameField.getText();
             char[] password = passwordField.getPassword();
 
-            boolean successful = uiAgent.call_for_login(username, String.valueOf(password));
-            if (successful) {
-                responseLabel.setText("success");
+            User user = null;
+            try {
+                user = uiAgent.call_for_login(username, String.valueOf(password));
+            } catch (ParseException ex) {
+                throw new RuntimeException(ex);
+            }
+            if (user != null) {
+                base.frame.dispose();
+                new Home(uiAgent, user);
             } else {
                 responseLabel.setText("Credentials are not valid");
             }

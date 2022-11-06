@@ -1,12 +1,10 @@
 package src.agents;
 
 import jade.core.Agent;
-import jade.core.behaviours.SimpleBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import org.json.JSONObject;
-import src.UI.Launch;
 import src.db.User;
 import src.db.Utils;
 import src.utils.Constants;
@@ -50,9 +48,14 @@ class SignupBehaviour extends TickerBehaviour {
         ACLMessage message = myAgent.receive(template);
         if (message != null) {
             JSONObject data = new JSONObject(message.getContent());
-            JSONObject response = User.signupClient(myAgent.db, data);
+            JSONObject dbResponse = new JSONObject();
+            if (data.getString("type").equals("C")) {
+                dbResponse = User.signupClient(myAgent.db, data);
+            } else if (data.getString("type").equals("P")) {
+                dbResponse = User.signupProvider(myAgent.db, data);
+            }
             myAgent.sendMessage(
-                    response.toString(),
+                    dbResponse.toString(),
                     Constants.signupConversationID,
                     ACLMessage.INFORM,
                     myAgent.searchForService(Constants.UIServiceName)
@@ -79,11 +82,18 @@ class LoginBehaviour extends TickerBehaviour {
         ACLMessage message = myAgent.receive(template);
         if (message != null) {
             JSONObject data = new JSONObject(message.getContent());
-            JSONObject response = User.isCredentialsValid(myAgent.db, data);
+            JSONObject response = User.login(myAgent.db, data);
+            String content = "";
+            int type = ACLMessage.REFUSE;
+
+            if (response != null) {
+                content = response.toString();
+                type = ACLMessage.INFORM;
+            }
             myAgent.sendMessage(
-                    response.toString(),
+                    content,
                     Constants.loginConversationID,
-                    ACLMessage.INFORM,
+                    type,
                     myAgent.searchForService(Constants.UIServiceName)
             );
         }

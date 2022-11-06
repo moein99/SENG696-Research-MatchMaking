@@ -6,6 +6,7 @@ import src.UI.Login;
 import src.UI.StartGUI;
 import src.db.*;
 
+import java.security.Key;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -14,10 +15,7 @@ import java.util.Set;
 public class Main {
     public static void main(String[] args) throws SQLException {
         Connection db = Utils.get_db_connection();
-        JSONObject obj = new JSONObject();
-        obj.put("username", "moein123");
-        obj.put("password", "moein123456");
-        User.signupClient(db, obj);
+        Keyword.get_by_text(db, "Django");
 //        ArrayList<User> users = User.all(db);
 //        for (User user: users) {
 //            System.out.println(user.id);

@@ -17,7 +17,7 @@ CREATE TABLE user (
 
 CREATE TABLE keyword (
     id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    text varchar (255) NOT NULL
+    text varchar (255) NOT NULL UNIQUE
 );
 
 -- INSERT INTO keyword (text) values ("scraping");
