@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.security.MessageDigest;
 
+import static src.utils.Utils.convertStringToDate;
+
 public class User {
     public int id;
     public String username;
@@ -56,28 +58,27 @@ public class User {
         this.balance = balance;
     }
 
-    public static ArrayList<User> all(Connection db) throws SQLException {
-        ArrayList<User> items = new ArrayList<>();
-        String query = "select * from user";
-        try (Statement st = db.createStatement()) {
-            ResultSet rs = st.executeQuery(query);
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                String username = rs.getString("username");
-                String encrypted_password = rs.getString("encrypted_password");
-                String user_type = rs.getString("user_type");
-                String name = rs.getString("name");
-                String website = rs.getString("website");
-                String logo_address = rs.getString("logo_address");
-                String resume_address = rs.getString("resume_address");
-                int hourly_compensation = rs.getInt("hourly_compensation");
-                boolean is_verified = rs.getBoolean("is_verified");
-                Date subscription_ends = rs.getTimestamp("subscription_ends");
-                int balance = rs.getInt("balance");
-                items.add(new User(id, username, encrypted_password, user_type, name, website, logo_address, resume_address, hourly_compensation, is_verified, subscription_ends, balance));
+    public static User get_with_id(Connection db, int id) {
+        String query = "SELECT * FROM user WHERE id=?";
+        System.out.println(id);
+
+        User user = null;
+        int rows = 0;
+
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            st.setInt(1, id);
+            ResultSet rs = st.executeQuery();
+            if (rs.last()) {
+                rows = rs.getRow();
             }
+            if (rows != 0) {
+                rs.first();
+                user = sqlToModel(rs);
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());;
         }
-        return items;
+        return user;
     }
 
     public static JSONObject signupClient(Connection db, JSONObject data) {
@@ -128,7 +129,7 @@ public class User {
         try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
             st.setString(1, username);
             st.setString(2, getHash(password));
-            st.setString(3, CLIENT_TYPE);
+            st.setString(3, PROVIDER_TYPE);
             st.setString(4, nameField);
             st.setString(5, website);
             st.setString(6, logoAddress);
@@ -212,7 +213,24 @@ public class User {
         return fields;
     }
 
-    public static User JSONtoModel(JSONObject obj) throws ParseException {
+    private static User sqlToModel(ResultSet rs) throws SQLException {
+        int id = rs.getInt("id");
+        String username = rs.getString("username");
+        String encryptedPassword = rs.getString("encrypted_password");
+        String userType = rs.getString("user_type");
+        String name = rs.getString("name");
+        String website = rs.getString("website");
+        String logoAddress = rs.getString("logo_address");
+        String resumeAddress = rs.getString("resume_address");
+        int hourlyCompensation = rs.getInt("hourly_compensation");
+        boolean isVerified = rs.getBoolean("is_verified");
+        Date subscriptionEnds = convertStringToDate(rs.getString("subscription_ends"));
+        int balance = rs.getInt("balance");
+
+        return new User(id, username, encryptedPassword, userType, name, website, logoAddress, resumeAddress, hourlyCompensation, isVerified, subscriptionEnds, balance);
+    }
+
+    public static User JSONtoModel(JSONObject obj) {
         int id = obj.getInt("id");
         String username = obj.getString("username");
         String encryptedPassword = obj.getString("encrypted_password");
@@ -227,13 +245,6 @@ public class User {
         int balance = obj.getInt("balance");
 
         return new User(id, username, encryptedPassword, userType, name, website, logoAddress, resumeAddress, hourlyCompensation, isVerified, subscriptionEnds, balance);
-    }
-
-    private static Date convertStringToDate(String date) throws ParseException {
-        if (date == null) {
-            return null;
-        }
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(date);
     }
 
     public static String getHash(String input) {

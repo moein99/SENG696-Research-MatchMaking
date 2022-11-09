@@ -35,6 +35,7 @@ CREATE TABLE userKeyword (
 CREATE TABLE project (
     id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
     owner_id int NOT NULL,
+    title varchar(255) NOT NULL,
     description varchar(255) NOT NULL,
     assignee_id int DEFAULT NULL,
     progress int default 0,
@@ -44,7 +45,7 @@ CREATE TABLE project (
     FOREIGN KEY (assignee_id) REFERENCES user(id)
 );
 
--- INSERT INTO project (owner_id, description, deadline) values (1, "An awesome project!", "2022-10-25 09:21:01");
+-- INSERT INTO project (owner_id, title, description, deadline) values (1, "An awesome project", "a description", "2022-10-25 09:21:01");
 
 CREATE TABLE bid (
     id int NOT NULL PRIMARY KEY AUTO_INCREMENT,

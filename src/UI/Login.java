@@ -50,12 +50,7 @@ public class Login implements ActionListener {
             String username = usernameField.getText();
             char[] password = passwordField.getPassword();
 
-            User user = null;
-            try {
-                user = uiAgent.call_for_login(username, String.valueOf(password));
-            } catch (ParseException ex) {
-                throw new RuntimeException(ex);
-            }
+            User user = uiAgent.call_for_login(username, String.valueOf(password));
             if (user != null) {
                 base.frame.dispose();
                 new Home(uiAgent, user);

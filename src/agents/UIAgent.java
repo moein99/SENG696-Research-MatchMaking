@@ -2,58 +2,74 @@ package src.agents;
 
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import org.json.JSONArray;
 import src.UI.Launch;
+import src.db.Project;
 import src.db.User;
+import src.db.Utils;
 import src.utils.Constants;
 import org.json.JSONObject;
 
 import java.io.StringWriter;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 
 public class UIAgent extends BaseAgent {
+    public Connection db;
     @Override
     protected void setup() {
         super.setup();
         register(Constants.UIServiceName);
+        try {
+            db = Utils.get_db_connection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         System.out.println("Starting UI agent, name: " + getName() + " local name: " + getLocalName());
         new Launch(this);
     }
 
-    public JSONObject call_for_client_signup(String username, String password) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("username", username);
-        jsonObject.put("type", "C");
-        jsonObject.put("password", password);
+    private ACLMessage call(
+            JSONObject data,
+            String conversationID,
+            String serviceName,
+            MessageTemplate receivingTemplate
+    ) {
         StringWriter out = new StringWriter();
-        jsonObject.write(out);
-
+        data.write(out);
         this.sendMessage(
-            out.toString(),
-            Constants.signupConversationID,
-            ACLMessage.REQUEST,
-            searchForService(Constants.profileServiceName)
+                out.toString(),
+                conversationID,
+                ACLMessage.REQUEST,
+                searchForService(serviceName)
         );
 
-        MessageTemplate template = MessageTemplate.and(
+        return blockingReceive(receivingTemplate);
+    }
+
+    private MessageTemplate getInformTemplate(String conversationId) {
+        return MessageTemplate.and(
                 MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                MessageTemplate.MatchConversationId(Constants.signupConversationID)
+                MessageTemplate.MatchConversationId(conversationId)
         );
+    }
 
-        ACLMessage message = blockingReceive(template);
-        if (message != null) {
-            jsonObject = new JSONObject(message.getContent());
-            jsonObject.put("status", true);
-            return jsonObject;
-        } else {
-            jsonObject = new JSONObject();
-            jsonObject.put("status", false);
-            jsonObject.put("message", Constants.noResponseMessage);
-            return jsonObject;
-        }
+    public JSONObject call_for_client_signup(
+            String username,
+            String password
+    ) {
+        JSONObject data = new JSONObject();
+        data.put("username", username);
+        data.put("type", "C");
+        data.put("password", password);
 
+        ACLMessage response = call(data, Constants.signupConversationID, Constants.profileServiceName, getInformTemplate(Constants.signupConversationID));
+
+        return new JSONObject(response.getContent());
     }
 
     public JSONObject call_for_provider_signup(
@@ -78,48 +94,15 @@ public class UIAgent extends BaseAgent {
         data.put("hourlyCompensation", hourlyCompensation);
         data.put("keywords", keywords);
 
-        StringWriter out = new StringWriter();
-        data.write(out);
+        ACLMessage response = call(data, Constants.signupConversationID, Constants.profileServiceName, getInformTemplate(Constants.signupConversationID));
 
-        this.sendMessage(
-                out.toString(),
-                Constants.signupConversationID,
-                ACLMessage.REQUEST,
-                searchForService(Constants.profileServiceName)
-        );
-
-        MessageTemplate template = MessageTemplate.and(
-                MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                MessageTemplate.MatchConversationId(Constants.signupConversationID)
-        );
-
-        ACLMessage message = blockingReceive(template);
-        JSONObject response;
-        if (message != null) {
-            response = new JSONObject(message.getContent());
-            response.put("status", true);
-            return response;
-        } else {
-            response = new JSONObject();
-            response.put("status", false);
-            response.put("message", Constants.noResponseMessage);
-            return response;
-        }
+        return new JSONObject(response.getContent());
     }
 
-    public User call_for_login(String username, String password) throws ParseException {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("username", username);
-        jsonObject.put("password", password);
-        StringWriter out = new StringWriter();
-        jsonObject.write(out);
-
-        this.sendMessage(
-                out.toString(),
-                Constants.loginConversationID,
-                ACLMessage.REQUEST,
-                searchForService(Constants.profileServiceName)
-        );
+    public User call_for_login(String username, String password) {
+        JSONObject data = new JSONObject();
+        data.put("username", username);
+        data.put("password", password);
 
         MessageTemplate template = MessageTemplate.and(
                 MessageTemplate.or(
@@ -129,17 +112,37 @@ public class UIAgent extends BaseAgent {
                 MessageTemplate.MatchConversationId(Constants.loginConversationID)
         );
 
-        ACLMessage message = blockingReceive(template);
-        if (message != null) {
-            if (message.getPerformative() == ACLMessage.REFUSE) {
-                return null;
-            } else if (message.getPerformative() == ACLMessage.INFORM) {
-                JSONObject response = new JSONObject(message.getContent());
-                return User.JSONtoModel(response);
-            }
+        ACLMessage response = call(data, Constants.loginConversationID, Constants.profileServiceName, template);
+
+        if (response.getPerformative() == ACLMessage.REFUSE) {
+            return null;
+        } else if (response.getPerformative() == ACLMessage.INFORM) {
+            JSONObject userJson = new JSONObject(response.getContent());
+            return User.JSONtoModel(userJson);
         }
 
         return null;
+    }
+
+    public JSONObject call_for_project_creation(int ownerId, String title, String description, int duration) {
+        JSONObject data = new JSONObject();
+        data.put("owner_id", ownerId);
+        data.put("title", title);
+        data.put("description", description);
+        data.put("duration", duration);
+
+        ACLMessage response = call(data, Constants.projectCreationConversationID, Constants.projectServiceName, getInformTemplate(Constants.projectCreationConversationID));
+        return new JSONObject(response.getContent());
+    }
+
+    public ArrayList<Project> getProjects() {
+        ACLMessage response = call(new JSONObject(), Constants.retrieveProjectsConversationID, Constants.projectServiceName, getInformTemplate(Constants.retrieveProjectsConversationID));
+        JSONArray projectsJson = new JSONArray(response.getContent());
+        ArrayList<Project> projects = new ArrayList<>();
+        for (int i = 0; i < projectsJson.length(); i++) {
+            projects.add(Project.JSONToModel(projectsJson.getJSONObject(i)));
+        }
+        return projects;
     }
 
     private ArrayList<String> extractKeywords(String rawKeywords) {

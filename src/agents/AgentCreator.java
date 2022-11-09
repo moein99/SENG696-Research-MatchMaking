@@ -10,6 +10,7 @@ public class AgentCreator extends Agent {
     protected void setup() {
         super.setup();
         createAgent("Profile_Agent", "src.agents.ProfileAgent");
+        createAgent("Project_Agent", "src.agents.ProjectAgent");
         createAgent("UI_Agent", "src.agents.UIAgent");
     }
 
