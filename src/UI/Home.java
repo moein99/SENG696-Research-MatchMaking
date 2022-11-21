@@ -1,6 +1,7 @@
 package src.UI;
 
 import src.agents.UIAgent;
+import src.db.Bid;
 import src.db.Project;
 import src.db.User;
 import src.utils.Utils;
@@ -75,20 +76,29 @@ public class Home implements ActionListener {
 
             if (user != null) {
                 c.gridy = 3;
-                JLabel hourlyCompensationLabel = new JLabel("Income Per Hour: " + User.get_with_id(uiAgent.db, project.owner_id).hourly_compensation + "$");
+                JLabel hourlyCompensationLabel = new JLabel("Provider's hourly rate: " + User.get_with_id(uiAgent.db, project.owner_id).hourly_compensation + "$");
                 hourlyCompensationLabel.setFont(new Font("Consolas", Font.PLAIN, 12));
                 hourlyCompensationLabel.setBorder(new EmptyBorder(10, 10,10,10));
                 itemPanel.add(hourlyCompensationLabel, c);
             }
 
             if (user != null && user.user_type.equals(User.CLIENT_TYPE)) {
-                JButton applyBtn = new JButton("Apply");
-                applyBtn.setFocusable(false);
+                Bid bid = Bid.get_by_id(uiAgent.db, user.id, project.id);
+                if (bid == null) {
+                    JButton applyBtn = new JButton("Apply");
+                    applyBtn.setFocusable(false);
+                    applyBtn.addActionListener(new ActionListener(){
+                        public void actionPerformed(ActionEvent e) {
+                            base.frame.dispose();
+                            new Apply(uiAgent, user, project.id);
+                        }
+                    });
 
-                c.gridwidth = 1;
-                c.gridx = 2;
-                c.gridy = 3;
-                itemPanel.add(applyBtn);
+                    c.gridwidth = 1;
+                    c.gridx = 2;
+                    c.gridy = 3;
+                    itemPanel.add(applyBtn);
+                }
             }
 
             itemPanel.setBackground(Color.GRAY);

@@ -135,6 +135,17 @@ public class UIAgent extends BaseAgent {
         return new JSONObject(response.getContent());
     }
 
+    public JSONObject call_for_bid_creation(int projectId, int bidderId, String description, int amount) {
+        JSONObject data = new JSONObject();
+        data.put("project_id", projectId);
+        data.put("bidder_id", bidderId);
+        data.put("description", description);
+        data.put("amount", amount);
+
+        ACLMessage response = call(data, Constants.bidCreationConversationID, Constants.contractServiceName, getInformTemplate(Constants.bidCreationConversationID));
+        return new JSONObject(response.getContent());
+    }
+
     public ArrayList<Project> getProjects() {
         ACLMessage response = call(new JSONObject(), Constants.retrieveProjectsConversationID, Constants.projectServiceName, getInformTemplate(Constants.retrieveProjectsConversationID));
         JSONArray projectsJson = new JSONArray(response.getContent());

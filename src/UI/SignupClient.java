@@ -73,8 +73,7 @@ public class SignupClient implements ActionListener {
                     username,
                     String.valueOf(password)
                 );
-                if (jsonResponse.getBoolean("status") && jsonResponse.getLong("id") != -1) {
-                    responseLabel.setText("Please login now");
+                if (jsonResponse.getLong("id") != -1) {
                     base.frame.dispose();
                     new Login(uiAgent);
                 } else {

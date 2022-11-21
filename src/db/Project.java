@@ -3,6 +3,7 @@ package src.db;
 import org.json.Cookie;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import src.utils.Utils;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
@@ -96,6 +97,29 @@ public class Project {
         return results;
     }
 
+    public static Project get_with_id(Connection db, int id) {
+        String query = "SELECT * FROM project WHERE id=?";
+
+        Project project = null;
+        int rows = 0;
+
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            st.setInt(1, id);
+            ResultSet rs = st.executeQuery();
+            if (rs.last()) {
+                rows = rs.getRow();
+            }
+            if (rows != 0) {
+                rs.first();
+                project = sqlToModel(rs);
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());;
+        }
+
+        return project;
+    }
+
     private static JSONObject sqlToJson(ResultSet rs) throws SQLException {
         JSONObject fields = new JSONObject();
         fields.put("id", rs.getInt("id"));
@@ -107,6 +131,19 @@ public class Project {
         fields.put("deadline", rs.getString("deadline"));
         fields.put("status", rs.getString("status"));
         return fields;
+    }
+
+    private static Project sqlToModel(ResultSet rs) throws SQLException {
+        int id = rs.getInt("id");
+        int ownerId = rs.getInt("owner_id");
+        String title = rs.getString("title");
+        String description = rs.getString("description");
+        int assigneeId = rs.getInt("assignee_id");
+        int progress = rs.getInt("progress");
+        Date deadline = Utils.convertStringToDate(rs.getString("deadline"));
+        String status = rs.getString("status");
+
+        return new Project(id, ownerId, title, description, assigneeId, progress, deadline, status);
     }
 
     public static Project JSONToModel(JSONObject data) {

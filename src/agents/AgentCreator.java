@@ -11,6 +11,7 @@ public class AgentCreator extends Agent {
         super.setup();
         createAgent("Profile_Agent", "src.agents.ProfileAgent");
         createAgent("Project_Agent", "src.agents.ProjectAgent");
+        createAgent("Contract_Agent", "src.agents.ContractAgent");
         createAgent("UI_Agent", "src.agents.UIAgent");
     }
 

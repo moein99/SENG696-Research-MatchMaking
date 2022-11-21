@@ -52,6 +52,7 @@ CREATE TABLE bid (
     bidder_id int,
     project_id int,
     hourly_rate int,
+    description varchar(255),
     status varchar(255) DEFAULT "SP",
     FOREIGN KEY (bidder_id) REFERENCES user(id),
     FOREIGN KEY (project_id) REFERENCES project(id)
