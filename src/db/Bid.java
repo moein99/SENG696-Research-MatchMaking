@@ -1,12 +1,11 @@
 package src.db;
 
 import org.json.JSONObject;
+import src.utils.Constants;
 import src.utils.Utils;
 
 import java.sql.*;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.ArrayList;
 
 public class Bid {
     public int id;
@@ -15,6 +14,10 @@ public class Bid {
     public int hourly_rate;
     public String description;
     public String status;
+
+    public static final String SENT_TO_PROVIDER = "SP";
+    public static final String ACCEPTED = "A";
+    public static final String REJECTED = "R";
 
     public Bid(int id, int bidder_id, int project_id, int hourly_rate, String status, String description) {
         this.id = id;
@@ -25,24 +28,30 @@ public class Bid {
         this.status = status;
     }
 
-    public static Bid get_by_id(Connection db, int identifier) throws SQLException {
-        String query = "select * from bid where id=" + identifier;
-        try (Statement st = db.createStatement()) {
-            ResultSet rs = st.executeQuery(query);
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                int bidder_id = rs.getInt("bidder_id");
-                int project_id = rs.getInt("project_id");
-                int hourly_rate = rs.getInt("hourly_rate");
-                String description = rs.getString("description");
-                String status = rs.getString("status");
-                return new Bid(id, bidder_id, project_id, hourly_rate, description, status);
+    public static Bid getById(Connection db, int id) {
+        String query = "SELECT * FROM bid WHERE id=?";
+
+        Bid bid = null;
+        int rows = 0;
+
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            st.setInt(1, id);
+            ResultSet rs = st.executeQuery();
+            if (rs.last()) {
+                rows = rs.getRow();
             }
+            if (rows != 0) {
+                rs.first();
+                bid = sqlToModel(rs);
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());;
         }
-        return null;
+
+        return bid;
     }
 
-    public static Bid get_by_id(Connection db, int bidder_id, int project_id) {
+    public static Bid getById(Connection db, int bidder_id, int project_id) {
         String query = "SELECT * FROM bid WHERE bidder_id=? AND project_id=?";
 
         Bid bid = null;
@@ -64,6 +73,41 @@ public class Bid {
         }
 
         return bid;
+    }
+
+    public static ArrayList<Bid> getByProjectId(Connection db, int project_id) {
+        String query = "SELECT * FROM bid WHERE project_id=?";
+        ArrayList<Bid> results = new ArrayList<>();
+
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            st.setInt(1, project_id);
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                results.add(sqlToModel(rs));
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());;
+        }
+
+        return results;
+    }
+
+    public static ArrayList<Bid> getByProjectIds(Connection db, ArrayList<Integer> projectIds, String status) {
+        String query = "SELECT * FROM bid WHERE status=? AND project_id IN (" + Utils.concatWithCommas(projectIds) + ")";
+
+        ArrayList<Bid> results = new ArrayList<>();
+
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            st.setString(1, status);
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                results.add(sqlToModel(rs));
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+        return results;
+
     }
 
     public static JSONObject insert(Connection db, JSONObject data) {
@@ -99,6 +143,17 @@ public class Bid {
 
         obj.put("id", bidId);
         return obj;
+    }
+
+    public static void update_status(Connection db, ArrayList<Integer> ids, String newStatus) {
+        String query = "UPDATE bid SET status=? WHERE id IN (" + Utils.concatWithCommas(ids) + ")";
+
+        try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
+            st.setString(1, newStatus);
+            st.executeUpdate();
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
     }
 
     private static Bid sqlToModel(ResultSet rs) throws SQLException {

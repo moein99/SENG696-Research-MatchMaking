@@ -71,7 +71,7 @@ public class CreateProject implements ActionListener {
                 responseLabel.setText("Duration should be an integer");
                 return;
             }
-            JSONObject response = uiAgent.call_for_project_creation(user.id, title, description, durationDays);
+            JSONObject response = uiAgent.callForProjectCreation(user.id, title, description, durationDays);
             if (response.getInt("id") != -1) {
                 responseLabel.setText("Created!");
                 base.frame.dispose();

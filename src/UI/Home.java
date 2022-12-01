@@ -18,6 +18,8 @@ public class Home implements ActionListener {
     User user;
     GridBase base;
     JButton createProjectBtn;
+    JButton showBidsBtn;
+    JButton showActiveProjectsBtn;
     public Home(UIAgent agent, User dbUser) {
         uiAgent = agent;
         user = dbUser;
@@ -28,6 +30,16 @@ public class Home implements ActionListener {
             createProjectBtn.addActionListener(this);
             createProjectBtn.setFocusable(false);
             base.topPanels[0][1].add(createProjectBtn);
+
+            showBidsBtn = new JButton("Incoming Bids");
+            showBidsBtn.addActionListener(this);
+            showBidsBtn.setFocusable(false);
+            base.topPanels[0][2].add(showBidsBtn);
+
+            showActiveProjectsBtn = new JButton("Active Projects");
+            showActiveProjectsBtn.addActionListener(this);
+            showActiveProjectsBtn.setFocusable(false);
+            base.topPanels[0][3].add(showActiveProjectsBtn);
         }
 
         ArrayList<Project> projects = uiAgent.getProjects();
@@ -83,7 +95,7 @@ public class Home implements ActionListener {
             }
 
             if (user != null && user.user_type.equals(User.CLIENT_TYPE)) {
-                Bid bid = Bid.get_by_id(uiAgent.db, user.id, project.id);
+                Bid bid = Bid.getById(uiAgent.db, user.id, project.id);
                 if (bid == null) {
                     JButton applyBtn = new JButton("Apply");
                     applyBtn.setFocusable(false);
@@ -118,6 +130,16 @@ public class Home implements ActionListener {
         if (e.getSource() == createProjectBtn) {
             base.frame.dispose();
             new CreateProject(uiAgent, user);
+        }
+
+        if (e.getSource() == showBidsBtn) {
+            base.frame.dispose();
+            new ProviderBids(uiAgent, user);
+        }
+
+        if (e.getSource() == showActiveProjectsBtn) {
+            base.frame.dispose();
+            new ActiveProjects(uiAgent, user);
         }
     }
 }

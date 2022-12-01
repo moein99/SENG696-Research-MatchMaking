@@ -1,6 +1,5 @@
 package src.UI;
 
-import com.mysql.cj.log.Log;
 import org.json.JSONObject;
 import src.agents.UIAgent;
 import src.utils.validators.FieldValidator;
@@ -69,7 +68,7 @@ public class SignupClient implements ActionListener {
             if (response != null) {
                 responseLabel.setText(response);
             } else {
-                JSONObject jsonResponse = uiAgent.call_for_client_signup(
+                JSONObject jsonResponse = uiAgent.callForClientSignup(
                     username,
                     String.valueOf(password)
                 );

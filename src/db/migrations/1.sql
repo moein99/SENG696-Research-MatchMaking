@@ -41,6 +41,7 @@ CREATE TABLE project (
     progress int default 0,
     deadline TIMESTAMP NOT NULL,
     status varchar(255) DEFAULT "C",
+    hours_worked int default 0,
     FOREIGN KEY (owner_id) REFERENCES user(id),
     FOREIGN KEY (assignee_id) REFERENCES user(id)
 );

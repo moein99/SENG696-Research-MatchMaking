@@ -85,7 +85,7 @@ public class Apply implements ActionListener {
                 responseLabel.setText(message);
             } else {
                 JSONObject response;
-                response = uiAgent.call_for_bid_creation(projectId, user.id, description, Integer.parseInt(proposedAmount));
+                response = uiAgent.callForBidCreation(projectId, user.id, description, Integer.parseInt(proposedAmount));
                 if (response.getInt("id") == -1) {
                     responseLabel.setText("internal error");
                 } else {

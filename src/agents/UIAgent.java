@@ -3,7 +3,7 @@ package src.agents;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import org.json.JSONArray;
-import src.UI.Launch;
+import src.UI.Home;
 import src.db.Project;
 import src.db.User;
 import src.db.Utils;
@@ -13,7 +13,6 @@ import org.json.JSONObject;
 import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -30,7 +29,8 @@ public class UIAgent extends BaseAgent {
             throw new RuntimeException(e);
         }
         System.out.println("Starting UI agent, name: " + getName() + " local name: " + getLocalName());
-        new Launch(this);
+//        new Launch(this);
+        new Home(this, User.get_with_id(db, 41));
     }
 
     private ACLMessage call(
@@ -58,7 +58,7 @@ public class UIAgent extends BaseAgent {
         );
     }
 
-    public JSONObject call_for_client_signup(
+    public JSONObject callForClientSignup(
             String username,
             String password
     ) {
@@ -72,7 +72,7 @@ public class UIAgent extends BaseAgent {
         return new JSONObject(response.getContent());
     }
 
-    public JSONObject call_for_provider_signup(
+    public JSONObject callForProviderSignup(
             String username,
             String password,
             String name,
@@ -99,7 +99,7 @@ public class UIAgent extends BaseAgent {
         return new JSONObject(response.getContent());
     }
 
-    public User call_for_login(String username, String password) {
+    public User callForLogin(String username, String password) {
         JSONObject data = new JSONObject();
         data.put("username", username);
         data.put("password", password);
@@ -124,7 +124,7 @@ public class UIAgent extends BaseAgent {
         return null;
     }
 
-    public JSONObject call_for_project_creation(int ownerId, String title, String description, int duration) {
+    public JSONObject callForProjectCreation(int ownerId, String title, String description, int duration) {
         JSONObject data = new JSONObject();
         data.put("owner_id", ownerId);
         data.put("title", title);
@@ -135,7 +135,7 @@ public class UIAgent extends BaseAgent {
         return new JSONObject(response.getContent());
     }
 
-    public JSONObject call_for_bid_creation(int projectId, int bidderId, String description, int amount) {
+    public JSONObject callForBidCreation(int projectId, int bidderId, String description, int amount) {
         JSONObject data = new JSONObject();
         data.put("project_id", projectId);
         data.put("bidder_id", bidderId);
@@ -144,6 +144,13 @@ public class UIAgent extends BaseAgent {
 
         ACLMessage response = call(data, Constants.bidCreationConversationID, Constants.contractServiceName, getInformTemplate(Constants.bidCreationConversationID));
         return new JSONObject(response.getContent());
+    }
+
+    public void callForBidAccept(int bidId) {
+        JSONObject data = new JSONObject();
+        data.put("bid_id", bidId);
+
+        call(data, Constants.bidAcceptConversationID, Constants.contractServiceName, getInformTemplate(Constants.bidAcceptConversationID));
     }
 
     public ArrayList<Project> getProjects() {
@@ -156,7 +163,38 @@ public class UIAgent extends BaseAgent {
         return projects;
     }
 
+    public JSONObject getProviderOpenBids(int userId) {
+        JSONObject data = new JSONObject();
+        data.put("user_id", userId);
+        ACLMessage response = call(data, Constants.retrieveOpenBidsConversationID, Constants.contractServiceName, getInformTemplate(Constants.retrieveOpenBidsConversationID));
+
+        return new JSONObject(response.getContent());
+    }
+
     private ArrayList<String> extractKeywords(String rawKeywords) {
         return new ArrayList<>(Arrays.asList(rawKeywords.split(",")));
+    }
+
+    public JSONArray getProviderActiveProjects(User user) {
+        JSONObject data = new JSONObject();
+        data.put("user_id", user.id);
+        ACLMessage response = call(data, Constants.retrieveActiveProjectsConversationID, Constants.projectServiceName, getInformTemplate(Constants.retrieveActiveProjectsConversationID));
+        return new JSONArray(response.getContent());
+    }
+
+    public void callForMessage(String message, int senderId, int receiverId, int projectId) {
+        JSONObject data = new JSONObject();
+        data.put("text", message);
+        data.put("sender_id", String.valueOf(senderId));
+        data.put("receiver_id", String.valueOf(receiverId));
+        data.put("project_id", String.valueOf(projectId));
+        call(data, Constants.messageCreationConversationID, Constants.projectServiceName, getInformTemplate(Constants.messageCreationConversationID));
+    }
+
+    public JSONArray retrieveChat(int projectId) {
+        JSONObject data = new JSONObject();
+        data.put("project_id", projectId);
+        ACLMessage response = call(data, Constants.retrieveMessagesConversationID, Constants.projectServiceName, getInformTemplate(Constants.retrieveMessagesConversationID));
+        return new JSONArray(response.getContent());
     }
 }

@@ -1,12 +1,12 @@
 package src.db;
 
-import org.json.Cookie;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import src.utils.Utils;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -17,29 +17,35 @@ public class Project {
     public int owner_id;
     public String title;
     public String description;
-    public int assignee_id;
+    public int assigneeId;
     public int progress;
     public Date deadline;
     public String status;
+    public int hoursWorked;
+
+    public final static String CREATED = "C";
+    public final static String ASSIGNED = "A";
 
     public Project(
             int id,
             int owner_id,
             String title,
             String description,
-            int assignee_id,
+            int assigneeId,
             int progress,
             Date deadline,
-            String status
+            String status,
+            int hoursWorked
     ) {
         this.id = id;
         this.owner_id = owner_id;
         this.title = title;
         this.description = description;
-        this.assignee_id = assignee_id;
+        this.assigneeId = assigneeId;
         this.progress = progress;
         this.deadline = deadline;
         this.status = status;
+        this.hoursWorked = hoursWorked;
     }
 
     public static JSONObject insert(Connection db, JSONObject data) {
@@ -81,18 +87,34 @@ public class Project {
     }
 
     public static JSONArray get_available(Connection db) {
-        String query = "SELECT * FROM project WHERE status='C'";
+        String query = "SELECT * FROM project WHERE status=?";
         JSONArray results = new JSONArray();
 
-        int rows = 0;
-
         try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            st.setString(1, Project.CREATED);
             ResultSet rs = st.executeQuery();
             while (rs.next()) {
                 results.put(sqlToJson(rs));
             }
         } catch (SQLException ex) {
-            System.out.println(ex.getMessage());;
+            System.out.println(ex.getMessage());
+        }
+        return results;
+    }
+
+    public static ArrayList<Project> getUserProjects(Connection db, int userId, String status) {
+        String query = "SELECT * FROM project WHERE owner_id=? AND status=?";
+        ArrayList<Project> results = new ArrayList<>();
+
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            st.setInt(1, userId);
+            st.setString(2, status);
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                results.add(sqlToModel(rs));
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
         }
         return results;
     }
@@ -130,6 +152,7 @@ public class Project {
         fields.put("progress", rs.getInt("progress"));
         fields.put("deadline", rs.getString("deadline"));
         fields.put("status", rs.getString("status"));
+        fields.put("hours_worked", rs.getInt("hours_worked"));
         return fields;
     }
 
@@ -142,8 +165,9 @@ public class Project {
         int progress = rs.getInt("progress");
         Date deadline = Utils.convertStringToDate(rs.getString("deadline"));
         String status = rs.getString("status");
+        int hoursWorked = rs.getInt("hours_worked");
 
-        return new Project(id, ownerId, title, description, assigneeId, progress, deadline, status);
+        return new Project(id, ownerId, title, description, assigneeId, progress, deadline, status, hoursWorked);
     }
 
     public static Project JSONToModel(JSONObject data) {
@@ -155,7 +179,35 @@ public class Project {
         int progress = data.getInt("progress");
         Date deadline = convertStringToDate(data.getString("deadline"));
         String status = data.getString("status");
+        int hoursWorked = data.getInt("hours_worked");
 
-        return new Project(id, owner_id, title, description, assignee_id, progress, deadline, status);
+        return new Project(id, owner_id, title, description, assignee_id, progress, deadline, status, hoursWorked);
+    }
+
+    public static void assignUser(Connection db, int projectId, int assigneeId) {
+        String query = "UPDATE project SET assignee_id=?, status=?  WHERE id=?";
+
+        try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
+            st.setInt(1, assigneeId);
+            st.setString(2, Project.ASSIGNED);
+            st.setInt(3, projectId);
+            st.executeUpdate();
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    public JSONObject json() {
+        JSONObject obj = new JSONObject();
+        obj.put("id", id);
+        obj.put("owner_id", owner_id);
+        obj.put("title", title);
+        obj.put("description", description);
+        obj.put("assignee_id", assigneeId);
+        obj.put("progress", progress);
+        obj.put("deadline", Utils.convertDateToString(deadline));
+        obj.put("status", status);
+        obj.put("hours_worked", hoursWorked);
+        return obj;
     }
 }

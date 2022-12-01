@@ -7,7 +7,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.ParseException;
 
 public class Login implements ActionListener {
     GridBase base;
@@ -50,7 +49,7 @@ public class Login implements ActionListener {
             String username = usernameField.getText();
             char[] password = passwordField.getPassword();
 
-            User user = uiAgent.call_for_login(username, String.valueOf(password));
+            User user = uiAgent.callForLogin(username, String.valueOf(password));
             if (user != null) {
                 base.frame.dispose();
                 new Home(uiAgent, user);

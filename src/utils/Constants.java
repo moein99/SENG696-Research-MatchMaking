@@ -12,7 +12,13 @@ public class Constants {
     public static final String loginConversationID = "login";
     public static final String projectCreationConversationID = "projectCreation";
     public static final String retrieveProjectsConversationID = "retrieveProjects";
+    public static final String projectInitializationConversationID = "initializeProject";
+    public static final String retrieveOpenBidsConversationID = "retrieveOpenBids";
+    public static final String retrieveActiveProjectsConversationID = "retrieveActiveProjects";
     public static final String bidCreationConversationID = "bidCreation";
+    public static final String bidAcceptConversationID = "bidAccept";
+    public static final String messageCreationConversationID = "messageCreation";
+    public static final String retrieveMessagesConversationID = "retrieveMessages";
 
     // Messages
     public static final String noResponseMessage = "no response";
