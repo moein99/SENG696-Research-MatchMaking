@@ -103,12 +103,13 @@ public class Project {
     }
 
     public static ArrayList<Project> getUserProjects(Connection db, int userId, String status) {
-        String query = "SELECT * FROM project WHERE owner_id=? AND status=?";
+        String query = "SELECT * FROM project WHERE (owner_id=? OR assignee_id=?) AND status=?";
         ArrayList<Project> results = new ArrayList<>();
 
         try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
             st.setInt(1, userId);
-            st.setString(2, status);
+            st.setInt(2, userId);
+            st.setString(3, status);
             ResultSet rs = st.executeQuery();
             while (rs.next()) {
                 results.add(sqlToModel(rs));
@@ -194,6 +195,47 @@ public class Project {
             st.executeUpdate();
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
+        }
+    }
+
+    public static void extend(Connection db, int projectId, int days) {
+        Project project = Project.get_with_id(db, projectId);
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(project.deadline);
+        cal.add(Calendar.DAY_OF_MONTH, days);
+        String timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(cal.getTime());
+        String query = "UPDATE project SET deadline=? WHERE id=?";
+
+        try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
+            st.setString(1, timeStamp);
+            st.setInt(2, projectId);
+            st.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void updateProgress(Connection db, int projectId, int progress) {
+        String query = "UPDATE project SET progress=? WHERE id=?";
+
+        try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
+            st.setInt(1, progress);
+            st.setInt(2, projectId);
+            st.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void updateHours(Connection db, int projectId, int hours) {
+        String query = "UPDATE project SET hours_worked=? WHERE id=?";
+
+        try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
+            st.setInt(1, hours);
+            st.setInt(2, projectId);
+            st.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 

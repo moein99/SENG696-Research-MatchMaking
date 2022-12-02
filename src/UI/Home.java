@@ -24,23 +24,24 @@ public class Home implements ActionListener {
         uiAgent = agent;
         user = dbUser;
         base = new GridBase(1, 1);
+        int topPanelCounter = 1;
 
         if (user != null && user.user_type.equals(User.PROVIDER_TYPE)) {
             createProjectBtn = new JButton("Create Project");
             createProjectBtn.addActionListener(this);
             createProjectBtn.setFocusable(false);
-            base.topPanels[0][1].add(createProjectBtn);
+            base.topPanels[0][topPanelCounter++].add(createProjectBtn);
 
             showBidsBtn = new JButton("Incoming Bids");
             showBidsBtn.addActionListener(this);
             showBidsBtn.setFocusable(false);
-            base.topPanels[0][2].add(showBidsBtn);
-
-            showActiveProjectsBtn = new JButton("Active Projects");
-            showActiveProjectsBtn.addActionListener(this);
-            showActiveProjectsBtn.setFocusable(false);
-            base.topPanels[0][3].add(showActiveProjectsBtn);
+            base.topPanels[0][topPanelCounter++].add(showBidsBtn);
         }
+
+        showActiveProjectsBtn = new JButton("Active Projects");
+        showActiveProjectsBtn.addActionListener(this);
+        showActiveProjectsBtn.setFocusable(false);
+        base.topPanels[0][topPanelCounter++].add(showActiveProjectsBtn);
 
         ArrayList<Project> projects = uiAgent.getProjects();
         JScrollPane sp = new JScrollPane();

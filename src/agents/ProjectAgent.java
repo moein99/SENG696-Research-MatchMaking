@@ -34,6 +34,10 @@ public class ProjectAgent extends BaseAgent {
         addBehaviour(new RetrieveActiveProjectsBehaviour(this, 100));
         addBehaviour(new MessageCreationBehaviour(this, 100));
         addBehaviour(new RetrieveMessagesBehaviour(this, 100));
+        addBehaviour(new ExtendProjectBehaviour(this, 100));
+        addBehaviour(new UpdateProgressBehaviour(this, 100));
+        addBehaviour(new HoursUpdateBehaviour(this, 100));
+        addBehaviour(new EndProjectBehaviour(this, 100));
     }
 }
 
@@ -218,4 +222,126 @@ class RetrieveMessagesBehaviour extends TickerBehaviour {
     }
 }
 
+class ExtendProjectBehaviour extends TickerBehaviour {
+    private ProjectAgent myAgent;
+
+    public ExtendProjectBehaviour(Agent a, long period) {
+        super(a, period);
+        myAgent = (ProjectAgent) a;
+    }
+
+    @Override
+    protected void onTick() {
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                MessageTemplate.MatchConversationId(Constants.extendProjectConversationID)
+        );
+
+        ACLMessage message = myAgent.receive(template);
+        if (message != null) {
+            JSONObject data = new JSONObject(message.getContent());
+            int projectId = data.getInt("project_id");
+            int days = data.getInt("amount");
+            Project.extend(myAgent.db, projectId, days);
+            myAgent.sendMessage(
+                    "",
+                    Constants.extendProjectConversationID,
+                    ACLMessage.INFORM,
+                    myAgent.searchForService(Constants.UIServiceName)
+            );
+        }
+    }
+}
+
+class UpdateProgressBehaviour extends TickerBehaviour {
+    private ProjectAgent myAgent;
+
+    public UpdateProgressBehaviour(Agent a, long period) {
+        super(a, period);
+        myAgent = (ProjectAgent) a;
+    }
+
+    @Override
+    protected void onTick() {
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                MessageTemplate.MatchConversationId(Constants.updateProgressConversationID)
+        );
+
+        ACLMessage message = myAgent.receive(template);
+        if (message != null) {
+            JSONObject data = new JSONObject(message.getContent());
+            int projectId = data.getInt("project_id");
+            int progress = data.getInt("amount");
+            Project.updateProgress(myAgent.db, projectId, progress);
+            myAgent.sendMessage(
+                    "",
+                    Constants.updateProgressConversationID,
+                    ACLMessage.INFORM,
+                    myAgent.searchForService(Constants.UIServiceName)
+            );
+        }
+    }
+}
+
+class HoursUpdateBehaviour extends TickerBehaviour {
+    private ProjectAgent myAgent;
+
+    public HoursUpdateBehaviour(Agent a, long period) {
+        super(a, period);
+        myAgent = (ProjectAgent) a;
+    }
+
+    @Override
+    protected void onTick() {
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                MessageTemplate.MatchConversationId(Constants.hoursUpdateConversationID)
+        );
+
+        ACLMessage message = myAgent.receive(template);
+        if (message != null) {
+            JSONObject data = new JSONObject(message.getContent());
+            int projectId = data.getInt("project_id");
+            int hours = data.getInt("amount");
+            int hoursSoFar = data.getInt("amount_so_far");
+            Project.updateHours(myAgent.db, projectId, hours + hoursSoFar);
+            myAgent.sendMessage(
+                    "",
+                    Constants.hoursUpdateConversationID,
+                    ACLMessage.INFORM,
+                    myAgent.searchForService(Constants.UIServiceName)
+            );
+        }
+    }
+}
+
+class EndProjectBehaviour extends TickerBehaviour {
+    private ProjectAgent myAgent;
+
+    public EndProjectBehaviour(Agent a, long period) {
+        super(a, period);
+        myAgent = (ProjectAgent) a;
+    }
+
+    @Override
+    protected void onTick() {
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                MessageTemplate.MatchConversationId(Constants.endProjectConversationID)
+        );
+
+        ACLMessage message = myAgent.receive(template);
+        if (message != null) {
+            JSONObject data = new JSONObject(message.getContent());
+            int projectId = data.getInt("project_id");
+            myAgent.sendMessage(
+                    "",
+                    Constants.hoursUpdateConversationID,
+                    ACLMessage.INFORM,
+                    myAgent.searchForService(Constants.UIServiceName)
+            );
+        }
+    }
+}
 

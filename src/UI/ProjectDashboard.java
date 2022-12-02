@@ -3,6 +3,7 @@ package src.UI;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import src.agents.UIAgent;
+import src.db.Project;
 import src.db.User;
 
 import javax.swing.*;
@@ -18,7 +19,14 @@ public class ProjectDashboard implements ActionListener {
     JButton sendBtn;
     JTextField chatInput;
     JSONObject project;
-    JScrollPane chatPanel;
+    JScrollPane chatPane;
+    JButton extendSubmit;
+    JTextField extendField;
+    JTextField progressField;
+    JTextField hoursWorkedField;
+    JButton progressSubmit;
+    JButton hoursWorkedSubmit;
+    JButton endProjectBtn;
 
     public ProjectDashboard(UIAgent uiAgent, User user, JSONObject project) {
         this.uiAgent = uiAgent;
@@ -34,13 +42,15 @@ public class ProjectDashboard implements ActionListener {
         base.backButton.addActionListener(this);
         base.topPanels[0][0].add(base.backButton);
         base.frame.setVisible(true);
-        JScrollBar vertical = chatPanel.getVerticalScrollBar();
+        JScrollBar vertical = chatPane.getVerticalScrollBar();
         vertical.setValue(vertical.getMaximum());
     }
 
     private void setProjectInfo(JSONObject project) {
+        int maxHeight = 0;
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.WEST;
         c.weightx = 0.5;
         c.weighty = 0.5;
 
@@ -51,61 +61,160 @@ public class ProjectDashboard implements ActionListener {
         base.centerPanel.add(titleLabel, c);
 
         JLabel descriptionLabel = new JLabel(project.getString("description"));
-        descriptionLabel.setFont(new Font("Consolas", Font.PLAIN, 15));
+        descriptionLabel.setFont(new Font("Consolas", Font.PLAIN, 12));
         c.gridy = 1;
         base.centerPanel.add(descriptionLabel, c);
 
-        User user = User.get_with_id(uiAgent.db, project.getInt("assignee_id"));
-        JLabel assigneeLabel = new JLabel("Assignee: " + user.username);
-        titleLabel.setFont(new Font("Consolas", Font.PLAIN, 15));
+        User assignedUser = User.get_with_id(uiAgent.db, project.getInt("assignee_id"));
+        JLabel assigneeLabel = new JLabel("Assignee: " + assignedUser.username);
+        assigneeLabel.setFont(new Font("Consolas", Font.PLAIN, 12));
         c.gridy = 2;
         base.centerPanel.add(assigneeLabel, c);
 
-        JLabel deadline = new JLabel("Estimated finish date: " + project.getString("deadline"));
-        titleLabel.setFont(new Font("Consolas", Font.PLAIN, 15));
-        c.gridy = 3;
-        base.centerPanel.add(deadline, c);
-
         JLabel hoursWorked = new JLabel("hours worked so far: " + project.getInt("hours_worked"));
-        titleLabel.setFont(new Font("Consolas", Font.PLAIN, 15));
-        c.gridy = 4;
+        hoursWorked.setFont(new Font("Consolas", Font.PLAIN, 12));
+        c.gridy = 3;
         base.centerPanel.add(hoursWorked, c);
+
+        JLabel deadline = new JLabel("Estimated finish date: " + project.getString("deadline"));
+        deadline.setFont(new Font("Consolas", Font.PLAIN, 12));
+        c.gridy = 4;
+        base.centerPanel.add(deadline, c);
 
         JProgressBar progressBar = new JProgressBar(0, 100);
         progressBar.setValue(project.getInt("progress"));
         progressBar.setStringPainted(true);
         c.gridy = 5;
+        c.gridx = 0;
         base.centerPanel.add(progressBar, c);
 
-        c.gridy = 0;
-        c.gridx = 1;
-        base.centerPanel.add(new JPanel(), c);
+        if (user.user_type.equals(User.PROVIDER_TYPE)) {
+            JLabel extendLabel = new JLabel("Extend for: ");
+            extendLabel.setFont(new Font("Consolas", Font.PLAIN, 12));
+            c.gridy = 6;
+            base.centerPanel.add(extendLabel, c);
 
-        chatPanel = new JScrollPane();
-        chatPanel.setPreferredSize(new Dimension(400,100));
-        chatPanel.setViewportView(getChatViewPort());
-        c.gridx = 2;
+            extendField = new JTextField();
+            extendLabel.setFont(new Font("Consolas", Font.PLAIN, 12));
+            c.gridy = 6;
+            c.gridx = 1;
+            extendField.setPreferredSize(new Dimension(50, 20));
+            base.centerPanel.add(extendField, c);
+
+            JPanel extendPanel = new JPanel();
+            extendPanel.setLayout(new BorderLayout(10,10));
+            extendPanel.setBorder(new EmptyBorder(0,20,0,20));
+            extendPanel.setBackground(Color.GRAY);
+            extendSubmit = new JButton("Extend");
+            c.gridy = 6;
+            c.gridx = 2;
+            extendSubmit.setFocusable(false);
+            extendSubmit.addActionListener(this);
+            extendPanel.add(extendSubmit);
+            base.centerPanel.add(extendPanel, c);
+
+            if (project.getInt("progress") == 100) {
+                endProjectBtn = new JButton("End Project");
+                c.gridy = 7;
+                c.gridx = 0;
+                endProjectBtn.setFocusable(false);
+                endProjectBtn.addActionListener(this);
+                base.centerPanel.add(endProjectBtn, c);
+            }
+
+            maxHeight = c.gridy;
+        } else {
+            // Update Progress Bar
+            JLabel progressLabel = new JLabel("Set Progress %: ");
+            progressLabel.setFont(new Font("Consolas", Font.PLAIN, 12));
+            c.gridy = 6;
+            base.centerPanel.add(progressLabel, c);
+
+            progressField = new JTextField();
+            progressField.setFont(new Font("Consolas", Font.PLAIN, 12));
+            c.gridy = 6;
+            c.gridx = 1;
+            progressField.setPreferredSize(new Dimension(50, 20));
+            base.centerPanel.add(progressField, c);
+
+            JPanel progressPanel = new JPanel();
+            progressPanel.setLayout(new BorderLayout(10,10));
+            progressPanel.setBorder(new EmptyBorder(0,20,0,20));
+            progressPanel.setBackground(Color.GRAY);
+            progressSubmit = new JButton("Update");
+            c.gridy = 6;
+            c.gridx = 2;
+            progressSubmit.setFocusable(false);
+            progressSubmit.addActionListener(this);
+            progressPanel.add(progressSubmit);
+            base.centerPanel.add(progressPanel, c);
+
+            // Update Hours Worked
+
+            JLabel hoursWorkedLabel = new JLabel("Add Hours: ");
+            hoursWorkedLabel.setFont(new Font("Consolas", Font.PLAIN, 12));
+            c.gridy = 7;
+            c.gridx = 0;
+            base.centerPanel.add(hoursWorkedLabel, c);
+
+            hoursWorkedField = new JTextField();
+            hoursWorkedField.setFont(new Font("Consolas", Font.PLAIN, 12));
+            c.gridy = 7;
+            c.gridx = 1;
+            hoursWorkedField.setPreferredSize(new Dimension(50, 20));
+            base.centerPanel.add(hoursWorkedField, c);
+
+            JPanel hoursWorkedPanel = new JPanel();
+            hoursWorkedPanel.setLayout(new BorderLayout(10,10));
+            hoursWorkedPanel.setBorder(new EmptyBorder(0,20,0,20));
+            hoursWorkedPanel.setBackground(Color.GRAY);
+            hoursWorkedSubmit = new JButton("Submit");
+            c.gridy = 7;
+            c.gridx = 2;
+            hoursWorkedSubmit.setFocusable(false);
+            hoursWorkedSubmit.addActionListener(this);
+            hoursWorkedPanel.add(hoursWorkedSubmit);
+            base.centerPanel.add(hoursWorkedPanel, c);
+
+            maxHeight = c.gridy;
+        }
+
+        JPanel chatPanel = new JPanel();
+        chatPanel.setLayout(new BorderLayout(10,10));
+        chatPanel.setBorder(new EmptyBorder(10,10,10,10));
+        chatPanel.setBackground(Color.GRAY);
+        chatPane = new JScrollPane();
+        chatPane.setPreferredSize(new Dimension(400,100));
+        chatPane.setViewportView(getChatViewPort());
+        c.anchor = GridBagConstraints.EAST;
+        c.gridx = 3;
         c.gridy = 0;
         c.fill = GridBagConstraints.VERTICAL;
         c.weighty = 0;
         c.weightx = 1;
-        c.gridheight = 5;
+        c.gridheight = maxHeight;
         c.gridwidth = 2;
+        chatPanel.add(chatPane);
         base.centerPanel.add(chatPanel, c);
         c.gridwidth = 1;
 
+        JPanel chatFieldPanel = new JPanel();
+        chatFieldPanel.setLayout(new BorderLayout(10,10));
+        chatFieldPanel.setBorder(new EmptyBorder(0,20,0,20));
+        chatFieldPanel.setBackground(Color.GRAY);
         chatInput = new JTextField();
         chatInput.setFont(new Font("Consolas", Font.PLAIN, 20));
         c.fill = GridBagConstraints.HORIZONTAL;
-        c.gridx = 2;
-        c.gridy = 5;
+        c.gridx = 3;
+        c.gridy = maxHeight;
         c.weightx = 0.75;
-        base.centerPanel.add(chatInput, c);
+        chatFieldPanel.add(chatInput);
+        base.centerPanel.add(chatFieldPanel, c);
 
 
         sendBtn = new JButton("Send");
-        c.gridx = 3;
-        c.gridy = 5;
+        c.gridx = 4;
+        c.gridy = maxHeight;
         c.weightx = 0.25;
         sendBtn.addActionListener(this);
         base.centerPanel.add(sendBtn, c);
@@ -113,23 +222,23 @@ public class ProjectDashboard implements ActionListener {
 
     private Component getChatViewPort() {
         JPanel cell = new JPanel();
-        cell.setLayout(new GridLayout(0, 3, 20,20));
+        cell.setLayout(new GridLayout(0, 2, 20,20));
         cell.setBorder(new EmptyBorder(10, 10, 10, 10));
         JSONArray messages = uiAgent.retrieveChat(project.getInt("id"));
 
         for (int i = 0; i < messages.length(); i++) {
             JSONObject message = messages.getJSONObject(i);
-            JPanel first = new JPanel();
-            JPanel second = new JPanel();
-            JPanel third = new JPanel();
+            JPanel left = new JPanel();
+            JPanel right = new JPanel();
             if (message.getInt("sender_id") == user.id) {
-                first.add(new JLabel(message.getString("text")));
+                left.add(new JLabel(message.getString("text")));
+                left.setBackground(Color.lightGray);
             } else {
-                third.add(new JLabel(message.getString("text")));
+                right.add(new JLabel(message.getString("text")));
+                right.setBackground(Color.white);
             }
-            cell.add(first);
-            cell.add(second);
-            cell.add(third);
+            cell.add(left);
+            cell.add(right);
         }
         return cell;
     }
@@ -151,7 +260,51 @@ public class ProjectDashboard implements ActionListener {
                 receiverId = project.getInt("owner_id");
             }
             uiAgent.callForMessage(message, senderId, receiverId, project.getInt("id"));
-            chatPanel.setViewportView(getChatViewPort());
+            chatPane.setViewportView(getChatViewPort());
+            JScrollBar vertical = chatPane.getVerticalScrollBar();
+            vertical.setValue(vertical.getMaximum());
+        }
+        if (e.getSource() == extendSubmit) {
+            String daysText = extendField.getText();
+            extendField.setText("");
+            try {
+                int extendAmount = Integer.parseInt(daysText);
+                uiAgent.callForProjectExtension(extendAmount, project.getInt("id"));
+                base.frame.dispose();
+                new ProjectDashboard(uiAgent, user, Project.get_with_id(uiAgent.db, project.getInt("id")).json());
+            } catch (Exception ex) {
+                System.out.println("can't convert extend amount to integer");
+            }
+        }
+        if (e.getSource() == progressSubmit) {
+            String progress = progressField.getText();
+            progressField.setText("");
+            try {
+                int progressAmount = Integer.parseInt(progress);
+                if (progressAmount >= 0 && progressAmount <= 100) {
+                    uiAgent.callForProgressUpdate(progressAmount, project.getInt("id"));
+                    base.frame.dispose();
+                    new ProjectDashboard(uiAgent, user, Project.get_with_id(uiAgent.db, project.getInt("id")).json());
+                }
+            } catch (Exception ex) {
+                System.out.println("can't convert extend amount to integer");
+            }
+        }
+        if (e.getSource() == hoursWorkedSubmit) {
+            String hours = hoursWorkedField.getText();
+            hoursWorkedField.setText("");
+            try {
+                int hoursAmount = Integer.parseInt(hours);
+                uiAgent.callForHoursUpdate(hoursAmount, project.getInt("id"), project.getInt("hours_worked"));
+                base.frame.dispose();
+                new ProjectDashboard(uiAgent, user, Project.get_with_id(uiAgent.db, project.getInt("id")).json());
+            } catch (Exception ex) {
+                System.out.println("can't convert extend amount to integer");
+            }
+        }
+        if (e.getSource() == endProjectBtn) {
+            System.out.println("done");
+            uiAgent.callForProjectEnding(project.getInt("id"));
         }
     }
 }

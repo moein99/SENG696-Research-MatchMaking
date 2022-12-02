@@ -19,6 +19,10 @@ public class Constants {
     public static final String bidAcceptConversationID = "bidAccept";
     public static final String messageCreationConversationID = "messageCreation";
     public static final String retrieveMessagesConversationID = "retrieveMessages";
+    public static final String extendProjectConversationID = "extendProject";
+    public static final String updateProgressConversationID = "updateProgress";
+    public static final String hoursUpdateConversationID = "hoursUpdate";
+    public static final String endProjectConversationID = "endProject";
 
     // Messages
     public static final String noResponseMessage = "no response";

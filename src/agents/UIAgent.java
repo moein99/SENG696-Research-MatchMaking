@@ -30,7 +30,7 @@ public class UIAgent extends BaseAgent {
         }
         System.out.println("Starting UI agent, name: " + getName() + " local name: " + getLocalName());
 //        new Launch(this);
-        new Home(this, User.get_with_id(db, 41));
+        new Home(this, User.get_with_id(db, 42));
     }
 
     private ACLMessage call(
@@ -175,7 +175,7 @@ public class UIAgent extends BaseAgent {
         return new ArrayList<>(Arrays.asList(rawKeywords.split(",")));
     }
 
-    public JSONArray getProviderActiveProjects(User user) {
+    public JSONArray getUserActiveProjects(User user) {
         JSONObject data = new JSONObject();
         data.put("user_id", user.id);
         ACLMessage response = call(data, Constants.retrieveActiveProjectsConversationID, Constants.projectServiceName, getInformTemplate(Constants.retrieveActiveProjectsConversationID));
@@ -196,5 +196,33 @@ public class UIAgent extends BaseAgent {
         data.put("project_id", projectId);
         ACLMessage response = call(data, Constants.retrieveMessagesConversationID, Constants.projectServiceName, getInformTemplate(Constants.retrieveMessagesConversationID));
         return new JSONArray(response.getContent());
+    }
+
+    public void callForProjectExtension(int extendAmount, int id) {
+        JSONObject data = new JSONObject();
+        data.put("amount", String.valueOf(extendAmount));
+        data.put("project_id", String.valueOf(id));
+        call(data, Constants.extendProjectConversationID, Constants.projectServiceName, getInformTemplate(Constants.extendProjectConversationID));
+    }
+
+    public void callForProgressUpdate(int progressAmount, int id) {
+        JSONObject data = new JSONObject();
+        data.put("amount", String.valueOf(progressAmount));
+        data.put("project_id", String.valueOf(id));
+        call(data, Constants.updateProgressConversationID, Constants.projectServiceName, getInformTemplate(Constants.updateProgressConversationID));
+    }
+
+    public void callForHoursUpdate(int hoursAmount, int id, int hoursWorked) {
+        JSONObject data = new JSONObject();
+        data.put("amount", String.valueOf(hoursAmount));
+        data.put("project_id", String.valueOf(id));
+        data.put("amount_so_far", hoursWorked);
+        call(data, Constants.hoursUpdateConversationID, Constants.projectServiceName, getInformTemplate(Constants.hoursUpdateConversationID));
+    }
+
+    public void callForProjectEnding(int id) {
+        JSONObject data = new JSONObject();
+        data.put("project_id", id);
+        call(data, Constants.endProjectConversationID, Constants.projectServiceName, getInformTemplate(Constants.endProjectConversationID));
     }
 }

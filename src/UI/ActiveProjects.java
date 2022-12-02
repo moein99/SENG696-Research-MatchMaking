@@ -3,7 +3,6 @@ package src.UI;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import src.agents.UIAgent;
-import src.db.Project;
 import src.db.User;
 
 import javax.swing.*;
@@ -11,7 +10,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 
 public class ActiveProjects implements ActionListener {
     GridBase base;
@@ -23,7 +21,7 @@ public class ActiveProjects implements ActionListener {
         this.user = user;
         base = new GridBase(1, 1);
 
-        JSONArray projects = uiAgent.getProviderActiveProjects(user);
+        JSONArray projects = uiAgent.getUserActiveProjects(user);
         JScrollPane sp = new JScrollPane();
         sp.setViewportView(getViewPort(projects));
 
