@@ -41,15 +41,17 @@ public class Home implements ActionListener {
             base.topPanels[0][topPanelCounter++].add(showBidsBtn);
         }
 
-        showProjectsListBtn = new JButton("My Projects");
-        showProjectsListBtn.addActionListener(this);
-        showProjectsListBtn.setFocusable(false);
-        base.topPanels[0][topPanelCounter++].add(showProjectsListBtn);
+        if (user != null) {
+            showProjectsListBtn = new JButton("My Projects");
+            showProjectsListBtn.addActionListener(this);
+            showProjectsListBtn.setFocusable(false);
+            base.topPanels[0][topPanelCounter++].add(showProjectsListBtn);
 
-        showUserFeedbacksBtn = new JButton("My Feedbacks");
-        showUserFeedbacksBtn.addActionListener(this);
-        showUserFeedbacksBtn.setFocusable(false);
-        base.topPanels[0][topPanelCounter++].add(showUserFeedbacksBtn);
+            showUserFeedbacksBtn = new JButton("My Feedbacks");
+            showUserFeedbacksBtn.addActionListener(this);
+            showUserFeedbacksBtn.setFocusable(false);
+            base.topPanels[0][topPanelCounter++].add(showUserFeedbacksBtn);
+        }
 
         ArrayList<Project> projects = uiAgent.getProjects();
         JScrollPane sp = new JScrollPane();
