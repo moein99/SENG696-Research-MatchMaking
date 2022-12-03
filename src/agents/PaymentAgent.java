@@ -33,6 +33,7 @@ public class PaymentAgent extends BaseAgent {
 
 class MakeProjectPaymentBehaviour extends TickerBehaviour {
     private PaymentAgent myAgent;
+    final static double SYSTEM_RATE = 0.7;
 
     public MakeProjectPaymentBehaviour(Agent a, long period) {
         super(a, period);
@@ -56,7 +57,7 @@ class MakeProjectPaymentBehaviour extends TickerBehaviour {
             String transactionDescription = "received " + amount + "$ for '" + project.title + "' project.";
 
             Transaction.insert(myAgent.db, project.ownerId, project.assigneeId, transactionDescription, amount);
-            User.addBalance(myAgent.db, project.assigneeId, amount);
+            User.addBalance(myAgent.db, project.assigneeId, (int)(amount * SYSTEM_RATE));
             User.addBalance(myAgent.db, project.ownerId, -amount);
 
             myAgent.sendMessage(
