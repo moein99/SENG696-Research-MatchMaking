@@ -1,5 +1,6 @@
 package src.UI;
 
+import org.json.JSONObject;
 import src.agents.UIAgent;
 import src.db.Bid;
 import src.db.Project;
@@ -14,11 +15,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class Home implements ActionListener {
     UIAgent uiAgent;
     User user;
-    GridBase base;
+    Base base;
     JButton createProjectBtn;
     JButton showBidsBtn;
     JButton showProjectsListBtn;
@@ -27,7 +30,8 @@ public class Home implements ActionListener {
     public Home(UIAgent agent, User dbUser) {
         uiAgent = agent;
         user = dbUser;
-        base = new GridBase(1, 1);
+        base = new Base();
+        base.centerPanel.setLayout(new GridBagLayout());
         int topPanelCounter = 1;
 
         if (user != null && user.user_type.equals(User.PROVIDER_TYPE)) {
@@ -57,8 +61,25 @@ public class Home implements ActionListener {
         ArrayList<Project> projects = uiAgent.getProjects();
         JScrollPane sp = new JScrollPane();
         sp.setViewportView(getViewPort(projects));
+        JPanel projectsPanel = new JPanel();
+        projectsPanel.setLayout(new GridLayout(1, 1));
+        projectsPanel.add(sp);
 
-        base.centerPanels[0][0].add(sp);
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 0;
+        c.gridy = 0;
+        c.insets = new Insets(0,10,0,10);
+        c.weightx = 0.333;
+
+        JPanel p = new JPanel();
+        p.setBackground(Color.GRAY);
+        p.setPreferredSize(new Dimension(200, 510));
+        base.centerPanel.add(p, c);
+        c.gridx = 1;
+        c.weightx = 0.666;
+        projectsPanel.setPreferredSize(new Dimension(200, 510));
+        base.centerPanel.add(projectsPanel, c);
         base.backButton.addActionListener(this);
         base.topPanels[0][0].add(base.backButton);
         base.frame.setVisible(true);
@@ -67,6 +88,17 @@ public class Home implements ActionListener {
     private JPanel getViewPort(ArrayList<Project> projects) {
         JPanel cell = new JPanel();
         cell.setLayout(new GridLayout(0, 1, 20,20));
+        projects.sort((p1, p2) -> {
+            boolean p1Verified = p1.isOwnerVerified(uiAgent.db);
+            boolean p2Verified = p2.isOwnerVerified(uiAgent.db);
+            if ((p1Verified && p2Verified) || (!p1Verified && !p2Verified)) {
+                return 0;
+            } else if (p1Verified) {
+                return -1;
+            } else {
+                return 1;
+            }
+        });
 
         for (Project project: projects) {
             JLabel titleLabel = new JLabel(project.title);

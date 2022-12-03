@@ -264,4 +264,8 @@ public class Project {
         obj.put("hours_worked", hoursWorked);
         return obj;
     }
+
+    public boolean isOwnerVerified(Connection db) {
+        return User.get_with_id(db, ownerId).is_verified;
+    }
 }
