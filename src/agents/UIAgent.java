@@ -243,4 +243,11 @@ public class UIAgent extends BaseAgent {
 
         call(data, Constants.feedbackCreationConversationID, Constants.profileServiceName, getInformTemplate(Constants.feedbackCreationConversationID));
     }
+
+    public JSONArray retrieveUserFeedbacks(int userId) {
+        JSONObject data = new JSONObject();
+        data.put("user_id", userId);
+        ACLMessage response = call(data, Constants.retrieveFeedbacksConversationID, Constants.profileServiceName, getInformTemplate(Constants.retrieveFeedbacksConversationID));
+        return new JSONArray(response.getContent());
+    }
 }

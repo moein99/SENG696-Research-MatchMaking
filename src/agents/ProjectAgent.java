@@ -143,7 +143,7 @@ class RetrieveActiveProjectsBehaviour extends TickerBehaviour {
 
     private ArrayList<Project> getProjectsWithoutFeedback(int userId) {
         ArrayList<Project> finishedProjects = Project.getUserProjects(myAgent.db, userId, Project.FINISHED);
-        ArrayList<Feedback> userFeedbacks = Feedback.getUserFeedbacks(myAgent.db, userId);
+        ArrayList<Feedback> userFeedbacks = Feedback.getUserFeedbacks(myAgent.db, userId, true);
         ArrayList<Project> projectsWithoutFeedback = new ArrayList<>();
         for (Project project : finishedProjects) {
             boolean alreadyHasFeedback = false;

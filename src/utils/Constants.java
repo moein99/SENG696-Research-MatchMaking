@@ -26,6 +26,7 @@ public class Constants {
     public static final String endProjectConversationID = "endProject";
     public static final String makeProjectPaymentConversationID = "makeProjectPayment";
     public static final String feedbackCreationConversationID = "feedbackCreation";
+    public static final String retrieveFeedbacksConversationID = "retrieveFeedback";
 
     // Messages
     public static final String noResponseMessage = "no response";

@@ -6,15 +6,12 @@ import java.awt.*;
 public class GridBase extends Base {
     JPanel[][] centerPanels;
     JPanel[][] topPanels;
-    JButton backButton;
 
 
     GridBase(int rows, int columns) {
         super();
         centerPanels = new JPanel[rows][columns];
         topPanels = new JPanel[1][7];
-        backButton = new JButton("Back");
-        backButton.setFocusable(false);
 
         centerPanel.setLayout(new GridLayout(rows, columns, 20, 20));
         topPanel.setLayout(new GridLayout(1, 7, 20, 20));

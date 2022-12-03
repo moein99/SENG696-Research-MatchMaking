@@ -5,6 +5,9 @@ import src.agents.UIAgent;
 import src.utils.validators.FieldValidator;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -35,17 +38,22 @@ public class SignupClient implements ActionListener {
         signup.setFocusable(false);
         signup.addActionListener(this);
 
-        base.centerPanels[2][1].add(usernameInput);
-        base.centerPanels[2][0].add(new JLabel("Username:"), BorderLayout.EAST);
-        base.centerPanels[3][1].add(passwordInput);
-        base.centerPanels[3][0].add(new JLabel("Password:"), BorderLayout.EAST);
-        base.centerPanels[4][1].add(passwordConfirmationInput);
-        base.centerPanels[4][0].add(new JLabel("Confirm Password:"), BorderLayout.EAST);
-        base.centerPanels[5][1].add(signup);
-        base.centerPanels[6][1].add(responseLabel, BorderLayout.CENTER);
+        base.centerPanels[1][1].add(usernameInput);
+        base.centerPanels[1][0].add(new JLabel("Username:"), BorderLayout.EAST);
+        base.centerPanels[2][1].add(passwordInput);
+        base.centerPanels[2][0].add(new JLabel("Password:"), BorderLayout.EAST);
+        base.centerPanels[3][1].add(passwordConfirmationInput);
+        base.centerPanels[3][0].add(new JLabel("Confirm Password:"), BorderLayout.EAST);
+        base.centerPanels[4][1].add(signup);
+        base.centerPanels[5][1].add(responseLabel, BorderLayout.CENTER);
 
         base.backButton.addActionListener(this);
         base.topPanels[0][0].add(base.backButton);
+        base.centerPanel.setBorder(new CompoundBorder(
+                        new LineBorder(Color.black,1,true),
+                        new EmptyBorder(10, 10, 10, 10)
+                )
+        );
 
         base.frame.setVisible(true);
     }

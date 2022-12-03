@@ -9,6 +9,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Iterator;
 
 public class ProviderBids implements ActionListener {
@@ -67,6 +69,14 @@ public class ProviderBids implements ActionListener {
             itemPanel.add(amountLabel, c);
 
             JLabel bidderUsernameLabel = new JLabel("Username: " + openBids.getJSONObject(key).getString("bidder_username"));
+            bidderUsernameLabel.setForeground(new Color(0, 150, 255));
+            bidderUsernameLabel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    base.frame.dispose();
+                    new History(uiAgent, user, Integer.parseInt(openBids.getJSONObject(key).getString("bidder_id")), History.BACK_BIDS);
+                }
+            });
             titleLabel.setFont(new Font("Consolas", Font.PLAIN, 20));
             c.fill = GridBagConstraints.HORIZONTAL;
             c.gridx = 1;

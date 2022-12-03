@@ -73,7 +73,6 @@ public class Project {
                 try (ResultSet rs = st.getGeneratedKeys()) {
                     if (rs.next()) {
                         projectId = rs.getInt(1);
-                        System.out.println("project inserted, id: " + projectId);
                     }
                 } catch (SQLException ex) {
                     System.out.println(ex.getMessage());

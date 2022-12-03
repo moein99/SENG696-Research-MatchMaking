@@ -5,13 +5,16 @@ import src.agents.UIAgent;
 import src.utils.validators.FieldValidator;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
 public class SignupProvider implements ActionListener {
-    GridBase base;
+    Base base;
     JTextField usernameInput;
     JPasswordField passwordInput;
     JPasswordField passwordConfirmationInput;
@@ -27,7 +30,7 @@ public class SignupProvider implements ActionListener {
 
     public SignupProvider(UIAgent uiAgent) {
         this.uiAgent = uiAgent;
-        base = new GridBase(12, 3);
+        base = new Base();
         usernameInput = new JTextField();
         passwordInput = new JPasswordField();
         passwordConfirmationInput = new JPasswordField();
@@ -55,30 +58,69 @@ public class SignupProvider implements ActionListener {
         signup.addActionListener(this);
         signup.setFocusable(false);
 
-        base.centerPanels[0][0].add(new JLabel("Username:"), BorderLayout.EAST);
-        base.centerPanels[1][0].add(new JLabel("Password:"), BorderLayout.EAST);
-        base.centerPanels[2][0].add(new JLabel("Confirm Password:"), BorderLayout.EAST);
-        base.centerPanels[3][0].add(new JLabel("Name:"), BorderLayout.EAST);
-        base.centerPanels[4][0].add(new JLabel("Website:"), BorderLayout.EAST);
-        base.centerPanels[5][0].add(new JLabel("Logo:"), BorderLayout.EAST);
-        base.centerPanels[6][0].add(new JLabel("Resume:"), BorderLayout.EAST);
-        base.centerPanels[7][0].add(new JLabel("Hourly Compensation:"), BorderLayout.EAST);
-        base.centerPanels[8][0].add(new JLabel("keywords (separated by comma):"), BorderLayout.EAST);
+        base.centerPanel.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridy = 0;
+        c.gridx = 0;
+        c.weightx = 0.666;
 
-        base.centerPanels[0][1].add(usernameInput);
-        base.centerPanels[1][1].add(passwordInput);
-        base.centerPanels[2][1].add(passwordConfirmationInput);
-        base.centerPanels[3][1].add(nameInput);
-        base.centerPanels[4][1].add(websiteInput);
-        base.centerPanels[5][1].add(logoInput);
-        base.centerPanels[6][1].add(resumeInput);
-        base.centerPanels[7][1].add(hourlyCompensationInput);
-        base.centerPanels[8][1].add(keywordsInput);
-        base.centerPanels[9][1].add(signup);
-        base.centerPanels[10][1].add(responseLabel);
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new GridLayout(11, 2, 10,10));
+        JPanel[][] infoPanels = new JPanel[11][2];
+        for (int i = 0; i < 11; i++) {
+            for (int j = 0; j < 2; j ++) {
+                JPanel panel = new JPanel(new BorderLayout());
+                infoPanels[i][j] = panel;
+                infoPanel.add(panel);
+            }
+        }
+
+        infoPanels[0][0].add(new JLabel("Username:"), BorderLayout.EAST);
+        infoPanels[1][0].add(new JLabel("Password:"), BorderLayout.EAST);
+        infoPanels[2][0].add(new JLabel("Confirm Password:"), BorderLayout.EAST);
+        infoPanels[3][0].add(new JLabel("Name:"), BorderLayout.EAST);
+        infoPanels[4][0].add(new JLabel("Website:"), BorderLayout.EAST);
+        infoPanels[5][0].add(new JLabel("Logo:"), BorderLayout.EAST);
+        infoPanels[6][0].add(new JLabel("Resume:"), BorderLayout.EAST);
+        infoPanels[7][0].add(new JLabel("Hourly Compensation:"), BorderLayout.EAST);
+        infoPanels[8][0].add(new JLabel("keywords (separated by comma):"), BorderLayout.EAST);
+
+        infoPanels[0][1].add(usernameInput);
+        infoPanels[1][1].add(passwordInput);
+        infoPanels[2][1].add(passwordConfirmationInput);
+        infoPanels[3][1].add(nameInput);
+        infoPanels[4][1].add(websiteInput);
+        infoPanels[5][1].add(logoInput);
+        infoPanels[6][1].add(resumeInput);
+        infoPanels[7][1].add(hourlyCompensationInput);
+        infoPanels[8][1].add(keywordsInput);
+        infoPanels[9][1].add(signup);
+        infoPanels[10][1].add(responseLabel);
+        base.centerPanel.setBorder(new CompoundBorder(
+                new LineBorder(Color.black,1,true),
+                new EmptyBorder(10, 10, 10, 10)
+                )
+        );
+        base.centerPanel.add(infoPanel, c);
+        c.weightx = 0.333;
+        c.gridx = 1;
+        JPanel contract = new JPanel();
+        JLabel contractLabel = new JLabel("<html>By clicking signup you will accept the system's terms of use for providers. If you do not want to accept it, you can signup as a client.</html>");
+        contractLabel.setPreferredSize(new Dimension(200, 300));
+        contract.add(contractLabel);
+        base.centerPanel.add(contract, c);
+        JPanel[][] topPanels = new JPanel[1][7];
+        base.topPanel.setLayout(new GridLayout(1, 7, 20, 20));
+        for (int j = 0; j < 7; j ++) {
+            JPanel panel = new JPanel(new BorderLayout());
+            topPanels[0][j] = panel;
+            base.topPanel.add(panel);
+        }
+
 
         base.backButton.addActionListener(this);
-        base.topPanels[0][0].add(base.backButton);
+        topPanels[0][0].add(base.backButton);
 
         base.frame.setVisible(true);
     }

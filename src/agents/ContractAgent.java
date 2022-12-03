@@ -114,6 +114,7 @@ class RetrieveOpenBidsBehaviour extends TickerBehaviour {
                 data.put("bid_amount", String.valueOf(bid.hourly_rate));
                 data.put("bid_description", bid.description);
                 data.put("bidder_username", User.get_with_id(myAgent.db, bid.bidder_id).username);
+                data.put("bidder_id", String.valueOf(bid.bidder_id));
                 result.put(String.valueOf(bid.id), data);
                 break;
             }

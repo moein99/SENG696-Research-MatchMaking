@@ -60,7 +60,6 @@ public class User {
 
     public static User get_with_id(Connection db, int id) {
         String query = "SELECT * FROM user WHERE id=?";
-        System.out.println(id);
 
         User user = null;
         int rows = 0;
@@ -97,7 +96,6 @@ public class User {
                 try (ResultSet rs = st.getGeneratedKeys()) {
                     if (rs.next()) {
                         user_id = rs.getInt(1);
-                        System.out.println("user inserted, id: " + user_id);
                     }
                 } catch (SQLException ex) {
                     System.out.println(ex.getMessage());

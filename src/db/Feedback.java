@@ -42,8 +42,13 @@ public class Feedback {
         return null;
     }
 
-    public static ArrayList<Feedback> getUserFeedbacks(Connection db, int userId) {
-        String query = "SELECT * FROM feedback WHERE sender_id=?";
+    public static ArrayList<Feedback> getUserFeedbacks(Connection db, int userId, boolean isSender) {
+        String query = "SELECT * FROM feedback WHERE";
+        if (isSender) {
+            query += " sender_id=?";
+        } else {
+            query += " receiver_id=?";
+        }
 
         ArrayList<Feedback> results = new ArrayList<>();
 
@@ -88,5 +93,17 @@ public class Feedback {
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
         }
+    }
+
+    public JSONObject json() {
+        JSONObject data = new JSONObject();
+        data.put("id", id);
+        data.put("sender_id", sender_id);
+        data.put("receiver_id", receiver_id);
+        data.put("project_id", project_id);
+        data.put("comment", comment);
+        data.put("rate", rate);
+
+        return data;
     }
 }

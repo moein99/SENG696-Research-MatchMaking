@@ -10,6 +10,7 @@ public class Base extends JFrame {
     public JPanel rightPanel;
     public JPanel bottomPanel;
     public JPanel centerPanel;
+    JButton backButton;
 
     public Base() {
         frame = new JFrame();
@@ -18,6 +19,8 @@ public class Base extends JFrame {
         frame.setTitle("Matchmaking");
         frame.setLocationRelativeTo(null);
         frame.setLayout(new BorderLayout(20, 20));
+        backButton = new JButton("Back");
+        backButton.setFocusable(false);
 
         leftPanel = new JPanel();
         topPanel = new JPanel();

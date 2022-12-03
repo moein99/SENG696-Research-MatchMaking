@@ -4,6 +4,7 @@ import jade.core.Agent;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import src.db.Feedback;
 import src.db.User;
@@ -12,6 +13,7 @@ import src.utils.Constants;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class ProfileAgent extends BaseAgent {
     public Connection db;
@@ -29,6 +31,7 @@ public class ProfileAgent extends BaseAgent {
         addBehaviour(new SignupBehaviour(this, 100));
         addBehaviour(new LoginBehaviour(this, 100));
         addBehaviour(new FeedbackCreationBehaviour(this, 100));
+        addBehaviour(new RetrieveFeedbacksBehaviour(this, 100));
     }
 }
 
@@ -124,6 +127,40 @@ class FeedbackCreationBehaviour extends TickerBehaviour {
             myAgent.sendMessage(
                     "",
                     Constants.feedbackCreationConversationID,
+                    ACLMessage.INFORM,
+                    myAgent.searchForService(Constants.UIServiceName)
+            );
+        }
+    }
+}
+
+class RetrieveFeedbacksBehaviour extends TickerBehaviour {
+    private ProfileAgent myAgent;
+
+    public RetrieveFeedbacksBehaviour(Agent a, long period) {
+        super(a, period);
+        myAgent = (ProfileAgent) a;
+    }
+
+    @Override
+    protected void onTick() {
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                MessageTemplate.MatchConversationId(Constants.retrieveFeedbacksConversationID)
+        );
+
+        ACLMessage message = myAgent.receive(template);
+        if (message != null) {
+            JSONObject data = new JSONObject(message.getContent());
+            int userId = data.getInt("user_id");
+            ArrayList<Feedback> feedbacks = Feedback.getUserFeedbacks(myAgent.db, userId, false);
+            JSONArray results = new JSONArray();
+            for (Feedback feedback : feedbacks) {
+                results.put(feedback.json());
+            }
+            myAgent.sendMessage(
+                    results.toString(),
+                    Constants.retrieveFeedbacksConversationID,
                     ACLMessage.INFORM,
                     myAgent.searchForService(Constants.UIServiceName)
             );
