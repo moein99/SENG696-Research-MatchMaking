@@ -6,11 +6,13 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import src.db.Feedback;
 import src.db.Message;
 import src.db.Project;
 import src.db.Utils;
 import src.utils.Constants;
 
+import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -110,25 +112,53 @@ class RetrieveActiveProjectsBehaviour extends TickerBehaviour {
     protected void onTick() {
         MessageTemplate template = MessageTemplate.and(
                 MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
-                MessageTemplate.MatchConversationId(Constants.retrieveActiveProjectsConversationID)
+                MessageTemplate.MatchConversationId(Constants.retrieveProjectsListConversationID)
         );
 
         ACLMessage message = myAgent.receive(template);
         if (message != null) {
             JSONObject data = new JSONObject(message.getContent());
             int userId = data.getInt("user_id");
-            ArrayList<Project> activeProjects = Project.getUserProjects(myAgent.db, userId, Project.ASSIGNED);
+            ArrayList<Project> userProjects = Project.getUserProjects(myAgent.db, userId, Project.ASSIGNED);
+            ArrayList<Project> projectsWithoutFeedback = getProjectsWithoutFeedback(userId);
             JSONArray response = new JSONArray();
-            for (Project project: activeProjects) {
-                response.put(project.json());
+            for (Project project: userProjects) {
+                JSONObject projectJSON = project.json();
+                projectJSON.put("feedback_required", false);
+                response.put(projectJSON);
+            }
+            for (Project project: projectsWithoutFeedback) {
+                JSONObject projectJSON = project.json();
+                projectJSON.put("feedback_required", true);
+                response.put(projectJSON);
             }
             myAgent.sendMessage(
                     response.toString(),
-                    Constants.retrieveActiveProjectsConversationID,
+                    Constants.retrieveProjectsListConversationID,
                     ACLMessage.INFORM,
                     myAgent.searchForService(Constants.UIServiceName)
             );
         }
+    }
+
+    private ArrayList<Project> getProjectsWithoutFeedback(int userId) {
+        ArrayList<Project> finishedProjects = Project.getUserProjects(myAgent.db, userId, Project.FINISHED);
+        ArrayList<Feedback> userFeedbacks = Feedback.getUserFeedbacks(myAgent.db, userId);
+        ArrayList<Project> projectsWithoutFeedback = new ArrayList<>();
+        for (Project project : finishedProjects) {
+            boolean alreadyHasFeedback = false;
+            for (Feedback feedback : userFeedbacks) {
+                if (feedback.project_id == project.id && feedback.sender_id == userId) {
+                    alreadyHasFeedback = true;
+                    break;
+                }
+            }
+
+            if (!alreadyHasFeedback) {
+                projectsWithoutFeedback.add(project);
+            }
+        }
+        return projectsWithoutFeedback;
     }
 }
 
@@ -335,13 +365,34 @@ class EndProjectBehaviour extends TickerBehaviour {
         if (message != null) {
             JSONObject data = new JSONObject(message.getContent());
             int projectId = data.getInt("project_id");
+            Project.updateStatus(myAgent.db, projectId, Project.FINISHED);
+            callForPayments(projectId);
             myAgent.sendMessage(
                     "",
-                    Constants.hoursUpdateConversationID,
+                    Constants.endProjectConversationID,
                     ACLMessage.INFORM,
                     myAgent.searchForService(Constants.UIServiceName)
             );
         }
+    }
+
+    private ACLMessage callForPayments(int projectId) {
+        JSONObject data = new JSONObject();
+        data.put("project_id", projectId);
+        StringWriter out = new StringWriter();
+        data.write(out);
+        myAgent.sendMessage(
+                out.toString(),
+                Constants.makeProjectPaymentConversationID,
+                ACLMessage.REQUEST,
+                myAgent.searchForService(Constants.paymentServiceName)
+        );
+
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                MessageTemplate.MatchConversationId(Constants.makeProjectPaymentConversationID)
+        );
+        return myAgent.blockingReceive(template);
     }
 }
 

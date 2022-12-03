@@ -11,17 +11,17 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class ActiveProjects implements ActionListener {
+public class ProjectsList implements ActionListener {
     GridBase base;
     UIAgent uiAgent;
     User user;
 
-    public ActiveProjects(UIAgent uiAgent, User user) {
+    public ProjectsList(UIAgent uiAgent, User user) {
         this.uiAgent = uiAgent;
         this.user = user;
         base = new GridBase(1, 1);
 
-        JSONArray projects = uiAgent.getUserActiveProjects(user);
+        JSONArray projects = uiAgent.getUserProjectsList(user);
         JScrollPane sp = new JScrollPane();
         sp.setViewportView(getViewPort(projects));
 
@@ -51,18 +51,33 @@ public class ActiveProjects implements ActionListener {
             titleLabel.setBorder(new EmptyBorder(10, 30, 10, 30));
             itemPanel.add(titleLabel, c);
 
-            JButton view = new JButton("View Dashboard");
-            view.setFocusable(false);
-            view.setFont(new Font("Consolas", Font.PLAIN, 20));
-            c.fill = GridBagConstraints.HORIZONTAL;
-            c.gridx = 1;
-            c.gridy = 0;
-            view.setBorder(new EmptyBorder(10, 30, 10, 30));
-            view.addActionListener(e -> {
-                base.frame.dispose();
-                new ProjectDashboard(uiAgent, user, project);
-            });
-            itemPanel.add(view, c);
+            if (project.getBoolean("feedback_required")) {
+                JButton view = new JButton("Send Feedback");
+                view.setFocusable(false);
+                view.setFont(new Font("Consolas", Font.PLAIN, 20));
+                c.fill = GridBagConstraints.HORIZONTAL;
+                c.gridx = 1;
+                c.gridy = 0;
+                view.setBorder(new EmptyBorder(10, 30, 10, 30));
+                view.addActionListener(e -> {
+                    base.frame.dispose();
+                    new SubmitFeedback(uiAgent, user, project);
+                });
+                itemPanel.add(view, c);
+            } else {
+                JButton view = new JButton("View Dashboard");
+                view.setFocusable(false);
+                view.setFont(new Font("Consolas", Font.PLAIN, 20));
+                c.fill = GridBagConstraints.HORIZONTAL;
+                c.gridx = 1;
+                c.gridy = 0;
+                view.setBorder(new EmptyBorder(10, 30, 10, 30));
+                view.addActionListener(e -> {
+                    base.frame.dispose();
+                    new ProjectDashboard(uiAgent, user, project);
+                });
+                itemPanel.add(view, c);
+            }
 
             itemPanel.setBackground(Color.GRAY);
             cell.add(itemPanel);

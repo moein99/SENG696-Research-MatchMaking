@@ -34,7 +34,7 @@ public class Apply implements ActionListener {
         descriptionLabel.setFont(new Font("Consolas", Font.PLAIN, 15));
         JLabel deadlineLabel = new JLabel("Deadline: " + Utils.convertDateToString(project.deadline));
         deadlineLabel.setFont(new Font("Consolas", Font.PLAIN, 15));
-        JLabel hourlyCompensationLabel = new JLabel("Provider's hourly rate: " + User.get_with_id(uiAgent.db, project.owner_id).hourly_compensation + "$");
+        JLabel hourlyCompensationLabel = new JLabel("Provider's hourly rate: " + User.get_with_id(uiAgent.db, project.ownerId).hourly_compensation + "$");
         hourlyCompensationLabel.setFont(new Font("Consolas", Font.PLAIN, 15));
         JLabel descriptionFieldLabel = new JLabel("Description:", SwingConstants.RIGHT);
         JLabel amountFieldLabel = new JLabel("Amount:", SwingConstants.RIGHT);

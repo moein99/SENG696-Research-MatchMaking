@@ -265,4 +265,16 @@ public class User {
         }
         return data;
     }
+
+    public static void addBalance(Connection db, int assigneeId, int amount) {
+        String query = "UPDATE user SET balance=balance + ? WHERE id=?";
+
+        try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
+            st.setInt(1, amount);
+            st.setInt(2, assigneeId);
+            st.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

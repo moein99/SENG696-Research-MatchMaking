@@ -14,7 +14,7 @@ import static src.utils.Utils.convertStringToDate;
 
 public class Project {
     public int id;
-    public int owner_id;
+    public int ownerId;
     public String title;
     public String description;
     public int assigneeId;
@@ -25,10 +25,11 @@ public class Project {
 
     public final static String CREATED = "C";
     public final static String ASSIGNED = "A";
+    public final static String FINISHED = "F";
 
     public Project(
             int id,
-            int owner_id,
+            int ownerId,
             String title,
             String description,
             int assigneeId,
@@ -38,7 +39,7 @@ public class Project {
             int hoursWorked
     ) {
         this.id = id;
-        this.owner_id = owner_id;
+        this.ownerId = ownerId;
         this.title = title;
         this.description = description;
         this.assigneeId = assigneeId;
@@ -239,10 +240,22 @@ public class Project {
         }
     }
 
+    public static void updateStatus(Connection db, int projectId, String status) {
+        String query = "UPDATE project SET status=? WHERE id=?";
+
+        try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
+            st.setString(1, status);
+            st.setInt(2, projectId);
+            st.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public JSONObject json() {
         JSONObject obj = new JSONObject();
         obj.put("id", id);
-        obj.put("owner_id", owner_id);
+        obj.put("owner_id", ownerId);
         obj.put("title", title);
         obj.put("description", description);
         obj.put("assignee_id", assigneeId);

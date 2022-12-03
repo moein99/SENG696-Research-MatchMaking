@@ -5,6 +5,7 @@ import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import org.json.JSONObject;
+import src.db.Feedback;
 import src.db.User;
 import src.db.Utils;
 import src.utils.Constants;
@@ -27,6 +28,7 @@ public class ProfileAgent extends BaseAgent {
         }
         addBehaviour(new SignupBehaviour(this, 100));
         addBehaviour(new LoginBehaviour(this, 100));
+        addBehaviour(new FeedbackCreationBehaviour(this, 100));
     }
 }
 
@@ -94,6 +96,35 @@ class LoginBehaviour extends TickerBehaviour {
                     content,
                     Constants.loginConversationID,
                     type,
+                    myAgent.searchForService(Constants.UIServiceName)
+            );
+        }
+    }
+}
+
+class FeedbackCreationBehaviour extends TickerBehaviour {
+    private ProfileAgent myAgent;
+
+    public FeedbackCreationBehaviour(Agent a, long period) {
+        super(a, period);
+        myAgent = (ProfileAgent) a;
+    }
+
+    @Override
+    protected void onTick() {
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                MessageTemplate.MatchConversationId(Constants.feedbackCreationConversationID)
+        );
+
+        ACLMessage message = myAgent.receive(template);
+        if (message != null) {
+            JSONObject data = new JSONObject(message.getContent());
+            Feedback.insert(myAgent.db, data);
+            myAgent.sendMessage(
+                    "",
+                    Constants.feedbackCreationConversationID,
+                    ACLMessage.INFORM,
                     myAgent.searchForService(Constants.UIServiceName)
             );
         }

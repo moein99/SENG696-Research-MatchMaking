@@ -175,10 +175,10 @@ public class UIAgent extends BaseAgent {
         return new ArrayList<>(Arrays.asList(rawKeywords.split(",")));
     }
 
-    public JSONArray getUserActiveProjects(User user) {
+    public JSONArray getUserProjectsList(User user) {
         JSONObject data = new JSONObject();
         data.put("user_id", user.id);
-        ACLMessage response = call(data, Constants.retrieveActiveProjectsConversationID, Constants.projectServiceName, getInformTemplate(Constants.retrieveActiveProjectsConversationID));
+        ACLMessage response = call(data, Constants.retrieveProjectsListConversationID, Constants.projectServiceName, getInformTemplate(Constants.retrieveProjectsListConversationID));
         return new JSONArray(response.getContent());
     }
 
@@ -224,5 +224,23 @@ public class UIAgent extends BaseAgent {
         JSONObject data = new JSONObject();
         data.put("project_id", id);
         call(data, Constants.endProjectConversationID, Constants.projectServiceName, getInformTemplate(Constants.endProjectConversationID));
+    }
+
+    public void callForFeedbackCreation(JSONObject project, String comment, int rate, User user) {
+        JSONObject data = new JSONObject();
+        int senderId, receiverId;
+        senderId = user.id;
+        if (senderId == project.getInt("owner_id")) {
+            receiverId = project.getInt("assignee_id");
+        } else {
+            receiverId = project.getInt("owner_id");
+        }
+        data.put("project_id", project.getInt("id"));
+        data.put("sender_id", senderId);
+        data.put("receiver_id", receiverId);
+        data.put("comment", comment);
+        data.put("rate", rate);
+
+        call(data, Constants.feedbackCreationConversationID, Constants.profileServiceName, getInformTemplate(Constants.feedbackCreationConversationID));
     }
 }

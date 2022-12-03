@@ -89,7 +89,7 @@ public class Home implements ActionListener {
 
             if (user != null) {
                 c.gridy = 3;
-                JLabel hourlyCompensationLabel = new JLabel("Provider's hourly rate: " + User.get_with_id(uiAgent.db, project.owner_id).hourly_compensation + "$");
+                JLabel hourlyCompensationLabel = new JLabel("Provider's hourly rate: " + User.get_with_id(uiAgent.db, project.ownerId).hourly_compensation + "$");
                 hourlyCompensationLabel.setFont(new Font("Consolas", Font.PLAIN, 12));
                 hourlyCompensationLabel.setBorder(new EmptyBorder(10, 10,10,10));
                 itemPanel.add(hourlyCompensationLabel, c);
@@ -140,7 +140,7 @@ public class Home implements ActionListener {
 
         if (e.getSource() == showActiveProjectsBtn) {
             base.frame.dispose();
-            new ActiveProjects(uiAgent, user);
+            new ProjectsList(uiAgent, user);
         }
     }
 }

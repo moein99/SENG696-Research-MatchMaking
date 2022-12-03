@@ -247,7 +247,7 @@ public class ProjectDashboard implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == base.backButton) {
             base.frame.dispose();
-            new ActiveProjects(uiAgent, user);
+            new ProjectsList(uiAgent, user);
         }
         if (e.getSource() == sendBtn) {
             String message = chatInput.getText();
@@ -303,8 +303,9 @@ public class ProjectDashboard implements ActionListener {
             }
         }
         if (e.getSource() == endProjectBtn) {
-            System.out.println("done");
             uiAgent.callForProjectEnding(project.getInt("id"));
+            base.frame.dispose();
+            new ProjectsList(uiAgent, user);
         }
     }
 }

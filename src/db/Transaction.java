@@ -1,9 +1,10 @@
 package src.db;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import org.json.JSONObject;
+
+import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 public class Transaction {
@@ -35,5 +36,19 @@ public class Transaction {
             }
         }
         return null;
+    }
+
+    public static void insert(Connection db, int ownerId, int assigneeId, String description, int amount) {
+        String query = "INSERT INTO transaction (sender_id, receiver_id, description, amount) values (?,?,?,?)";
+
+        try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
+            st.setInt(1, ownerId);
+            st.setInt(2, assigneeId);
+            st.setString(3, description);
+            st.setInt(4, amount);
+            st.executeUpdate();
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
     }
 }
