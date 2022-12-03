@@ -11,6 +11,7 @@ public class Base extends JFrame {
     public JPanel bottomPanel;
     public JPanel centerPanel;
     JButton backButton;
+    JPanel[][] topPanels;
 
     public Base() {
         frame = new JFrame();
@@ -34,7 +35,14 @@ public class Base extends JFrame {
         bottomPanel.setPreferredSize(new Dimension(100, 100));
         centerPanel.setPreferredSize(new Dimension(100, 100));
 
+        topPanels = new JPanel[1][7];
+        topPanel.setLayout(new GridLayout(1, 7, 20, 20));
         topPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        for (int j = 0; j < 7; j ++) {
+            JPanel panel = new JPanel(new BorderLayout());
+            topPanels[0][j] = panel;
+            topPanel.add(panel);
+        }
 
         frame.add(leftPanel, BorderLayout.WEST);
         frame.add(topPanel, BorderLayout.NORTH);

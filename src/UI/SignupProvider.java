@@ -110,17 +110,9 @@ public class SignupProvider implements ActionListener {
         contractLabel.setPreferredSize(new Dimension(200, 300));
         contract.add(contractLabel);
         base.centerPanel.add(contract, c);
-        JPanel[][] topPanels = new JPanel[1][7];
-        base.topPanel.setLayout(new GridLayout(1, 7, 20, 20));
-        for (int j = 0; j < 7; j ++) {
-            JPanel panel = new JPanel(new BorderLayout());
-            topPanels[0][j] = panel;
-            base.topPanel.add(panel);
-        }
-
 
         base.backButton.addActionListener(this);
-        topPanels[0][0].add(base.backButton);
+        base.topPanels[0][0].add(base.backButton);
 
         base.frame.setVisible(true);
     }

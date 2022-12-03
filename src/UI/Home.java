@@ -23,6 +23,7 @@ public class Home implements ActionListener {
     JButton showBidsBtn;
     JButton showProjectsListBtn;
     JButton showUserFeedbacksBtn;
+    final static String verifiedIconAddress = "data/check.png";
     public Home(UIAgent agent, User dbUser) {
         uiAgent = agent;
         user = dbUser;
@@ -77,6 +78,13 @@ public class Home implements ActionListener {
             User owner = User.get_with_id(uiAgent.db, project.ownerId);
             JLabel providerLabel = new JLabel("Owner: " + owner.username);
             providerLabel.setForeground(new Color(0, 150, 255));
+            if (owner.is_verified) {
+                ImageIcon verifiedIcon = new ImageIcon(verifiedIconAddress);
+                Image image = verifiedIcon.getImage();
+                Image newimg = image.getScaledInstance(25, 25,  java.awt.Image.SCALE_SMOOTH);
+                verifiedIcon = new ImageIcon(newimg);
+                providerLabel.setIcon(verifiedIcon);
+            }
             providerLabel.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
