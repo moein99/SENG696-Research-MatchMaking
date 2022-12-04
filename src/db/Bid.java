@@ -1,7 +1,6 @@
 package src.db;
 
 import org.json.JSONObject;
-import src.utils.Constants;
 import src.utils.Utils;
 
 import java.sql.*;
@@ -93,7 +92,7 @@ public class Bid {
     }
 
     public static ArrayList<Bid> getByProjectIds(Connection db, ArrayList<Integer> projectIds, String status) {
-        String query = "SELECT * FROM bid WHERE status=? AND project_id IN (" + Utils.concatWithCommas(projectIds) + ")";
+        String query = "SELECT * FROM bid WHERE status=? AND project_id IN (" + Utils.concatIntsWithCommas(projectIds) + ")";
 
         ArrayList<Bid> results = new ArrayList<>();
 
@@ -146,7 +145,7 @@ public class Bid {
     }
 
     public static void update_status(Connection db, ArrayList<Integer> ids, String newStatus) {
-        String query = "UPDATE bid SET status=? WHERE id IN (" + Utils.concatWithCommas(ids) + ")";
+        String query = "UPDATE bid SET status=? WHERE id IN (" + Utils.concatIntsWithCommas(ids) + ")";
 
         try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
             st.setString(1, newStatus);

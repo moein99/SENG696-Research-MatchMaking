@@ -6,16 +6,13 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import src.db.Feedback;
-import src.db.Message;
-import src.db.Project;
-import src.db.Utils;
+import src.db.*;
 import src.utils.Constants;
 
 import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.*;
 
 public class ProjectAgent extends BaseAgent {
     public Connection db;
@@ -89,7 +86,16 @@ class RetrieveProjectsBehaviour extends TickerBehaviour {
 
         ACLMessage message = myAgent.receive(template);
         if (message != null) {
-            JSONArray dbResponse = Project.get_available(myAgent.db);
+            JSONObject data = new JSONObject(message.getContent());
+            int min = data.getInt("min");
+            int max = data.getInt("max");
+            int projectsDone = data.getInt("projects_done");
+            ArrayList<String> keywords = extractKeywords(data.getString("keywords"));
+            ArrayList<Integer> filteredProviders = getFilteredProviders(min, max, projectsDone, keywords);
+            JSONArray dbResponse = new JSONArray();
+            if (filteredProviders.size() != 0) {
+                dbResponse = Project.get_available(myAgent.db, filteredProviders);
+            }
             myAgent.sendMessage(
                     dbResponse.toString(),
                     Constants.retrieveProjectsConversationID,
@@ -97,6 +103,62 @@ class RetrieveProjectsBehaviour extends TickerBehaviour {
                     myAgent.searchForService(Constants.UIServiceName)
             );
         }
+    }
+
+    private ArrayList<Integer> getFilteredProviders(int min, int max, int projectsDone, ArrayList<String> keywords) {
+        ArrayList<Integer> projectsDoneIds = null;
+        if (projectsDone > 0) {
+            projectsDoneIds = new ArrayList<>();
+            ArrayList<Project> finishedProjects = Project.getWithStatus(myAgent.db, Project.FINISHED);
+            HashMap<Integer, Integer> ownerToFinishedProjects = new HashMap<>();
+            for (Project project : finishedProjects) {
+                if (ownerToFinishedProjects.containsKey(project.ownerId)) {
+                    ownerToFinishedProjects.put(project.ownerId, ownerToFinishedProjects.get(project.ownerId) + 1);
+                } else {
+                    ownerToFinishedProjects.put(project.ownerId, 1);
+                }
+            }
+
+            for (Map.Entry<Integer, Integer> set : ownerToFinishedProjects.entrySet()) {
+                if (set.getValue() >= projectsDone) {
+                    projectsDoneIds.add(set.getKey());
+                }
+            }
+        }
+
+        ArrayList<User> providersInRange = User.getByPriceRange(myAgent.db, min, max);
+        ArrayList<Integer> inRangeIds = new ArrayList<>();
+        for (User p : providersInRange) {
+            inRangeIds.add(p.id);
+        }
+
+        ArrayList<Integer> providersWithKeywords = null;
+        if (keywords.size() != 0) {
+            providersWithKeywords = new ArrayList<>(User.getWithKeywords(myAgent.db, keywords));
+        }
+
+        if (projectsDoneIds == null) {
+            projectsDoneIds = inRangeIds;
+        }
+        if (providersWithKeywords == null) {
+            providersWithKeywords = inRangeIds;
+        }
+
+        HashSet<Integer> first = new HashSet<>(inRangeIds);
+        HashSet<Integer> second = new HashSet<>(projectsDoneIds);
+        HashSet<Integer> third = new HashSet<>(providersWithKeywords);
+        first.retainAll(second);
+        first.retainAll(third);
+
+        return new ArrayList<>(first);
+    }
+
+    private ArrayList<String> extractKeywords(String keywordsRaw) {
+        ArrayList<String> keywords = new ArrayList<>();
+        if (!keywordsRaw.equals("")) {
+            Collections.addAll(keywords, keywordsRaw.split(","));
+        }
+        return keywords;
     }
 }
 

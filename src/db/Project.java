@@ -86,8 +86,8 @@ public class Project {
         return obj;
     }
 
-    public static JSONArray get_available(Connection db) {
-        String query = "SELECT * FROM project WHERE status=?";
+    public static JSONArray get_available(Connection db, ArrayList<Integer> filteredProviders) {
+        String query = "SELECT * FROM project WHERE status=? AND owner_id in (" + Utils.concatIntsWithCommas(filteredProviders) + ")";
         JSONArray results = new JSONArray();
 
         try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
@@ -249,6 +249,22 @@ public class Project {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static ArrayList<Project> getWithStatus(Connection db, String status) {
+        String query = "SELECT * FROM project WHERE status=?";
+        ArrayList<Project> results = new ArrayList<>();
+
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            st.setString(1, status);
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                results.add(sqlToModel(rs));
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+        return results;
     }
 
     public JSONObject json() {

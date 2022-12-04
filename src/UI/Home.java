@@ -1,6 +1,5 @@
 package src.UI;
 
-import org.json.JSONObject;
 import src.agents.UIAgent;
 import src.db.Bid;
 import src.db.Project;
@@ -15,8 +14,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 
 public class Home implements ActionListener {
     UIAgent uiAgent;
@@ -26,6 +23,7 @@ public class Home implements ActionListener {
     JButton showBidsBtn;
     JButton showProjectsListBtn;
     JButton showUserFeedbacksBtn;
+    JScrollPane projectsScrollPane;
     final static String verifiedIconAddress = "data/check.png";
     public Home(UIAgent agent, User dbUser) {
         uiAgent = agent;
@@ -58,31 +56,201 @@ public class Home implements ActionListener {
             base.topPanels[0][topPanelCounter++].add(showUserFeedbacksBtn);
         }
 
-        ArrayList<Project> projects = uiAgent.getProjects();
-        JScrollPane sp = new JScrollPane();
-        sp.setViewportView(getViewPort(projects));
-        JPanel projectsPanel = new JPanel();
-        projectsPanel.setLayout(new GridLayout(1, 1));
-        projectsPanel.add(sp);
+        setFilterPanel();
+        setProjectsPanel();
 
+        base.backButton.addActionListener(this);
+        base.topPanels[0][0].add(base.backButton);
+        base.frame.setVisible(true);
+    }
+
+    private void setFilterPanel() {
+        JPanel p = new JPanel();
+        p.setBackground(Color.GRAY);
+        p.setPreferredSize(new Dimension(200, 510));
+
+        p.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        JLabel keywordsLabel = Utils.getJLabel("Keywords (separate with ,): ", 12);
+        JLabel minLabel = Utils.getJLabel("Min Salary: ", 12);
+        JLabel maxLabel = Utils.getJLabel("Max Salary: ", 12);
+        JLabel projectsDoneLabel = Utils.getJLabel("Projects Done (+): ", 12);
+        JLabel responseLabel = Utils.getJLabel("", 12);
+        responseLabel.setForeground(Color.RED);
+        JTextField keywordsField = Utils.getJTextField(15);
+        JTextField minField = Utils.getJTextField(15);
+        JTextField maxField = Utils.getJTextField(15);
+        JTextField projectsDoneField = Utils.getJTextField(15);
+        JButton filterBtn = new JButton("Filter");
+        JButton resetBtn = new JButton("Reset");
+
+        filterBtn.addActionListener(e -> {
+            String keywords = keywordsField.getText();
+            String minI = minField.getText();
+            String maxI = maxField.getText();
+            if (user == null && (!maxI.equals("") || !minI.equals(""))) {
+                minField.setText("");
+                maxField.setText("");
+                responseLabel.setText("Guests can not search based on salary");
+                return;
+            }
+            String projectsDoneI = projectsDoneField.getText();
+            String verificationResponse = filterParametersValid(minI, maxI, projectsDoneI);
+            if (verificationResponse.equals("")) {
+                responseLabel.setText("");
+                int min, max, projectsDone;
+                if (minI.equals("")) {
+                    min = 0;
+                } else {
+                    min = Integer.parseInt(minI);
+                }
+
+                if (maxI.equals("")) {
+                    max = 999999999;
+                } else {
+                    max = Integer.parseInt(maxI);
+                }
+
+                if (projectsDoneI.equals("")) {
+                    projectsDone = -1;
+                } else {
+                    projectsDone = Integer.parseInt(projectsDoneI);
+                }
+
+                ArrayList<Project> projects = uiAgent.retrieveProjects(min, max, projectsDone, keywords);
+                projectsScrollPane.setViewportView(getViewPort(projects));
+            } else {
+                responseLabel.setText(verificationResponse);
+            }
+        });
+
+        c.gridy = 0;
+        c.gridx = 0;
+        c.weighty = 1;
+        c.insets = new Insets(10, 10, 0, 10);
+        c.anchor = GridBagConstraints.NORTH;
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        c.weightx = 0.1;
+        p.add(keywordsLabel, c);
+        c.weightx = 0.9;
+        c.gridx = 1;
+        p.add(keywordsField, c);
+
+        c.gridy = 1;
+
+        c.gridx = 0;
+        c.weightx = 0.1;
+        p.add(minLabel, c);
+        c.gridx = 1;
+        c.weightx = 0.9;
+        p.add(minField, c);
+
+        c.gridy = 2;
+
+        c.gridx = 0;
+        c.weightx = 0;
+        p.add(maxLabel, c);
+        c.gridx = 1;
+        c.weightx = 0;
+        p.add(maxField, c);
+
+        c.gridy = 3;
+
+        c.gridx = 0;
+        c.weightx = 0.9;
+        p.add(projectsDoneLabel, c);
+        c.gridx = 1;
+        c.weightx = 0.1;
+        p.add(projectsDoneField, c);
+
+        c.gridy = 4;
+
+        c.gridx = 0;
+        c.weightx = 0.5;
+        p.add(resetBtn, c);
+        c.gridx = 1;
+        c.weightx = 0.5;
+        p.add(filterBtn, c);
+
+        c.gridy = 5;
+
+        c.gridx = 0;
+        c.gridwidth = 2;
+        c.weightx = 1;
+        p.add(responseLabel, c);
+
+        base.centerPanel.add(p, getFilterPanelConstraints());
+    }
+
+    private String filterParametersValid(String minI, String maxI, String projectsDoneI) {
+        int min, max, projectsDone;
+        try {
+            if (minI.equals("")) {
+                min = 0;
+            } else {
+                min = Integer.parseInt(minI);
+            }
+
+            if (maxI.equals("")) {
+                max = 999999;
+            } else {
+                max = Integer.parseInt(maxI);
+            }
+            if (projectsDoneI.equals("")) {
+                projectsDone = 0;
+            } else {
+                projectsDone = Integer.parseInt(projectsDoneI);
+            }
+        } catch (Exception ex) {
+            return "Min, Max, and Projects done should be Integers";
+        }
+        if (projectsDone < 0) {
+            return "Projects done can not be negative";
+        }
+        if (max < 1) {
+            return "Max should be more than 0";
+        }
+        if (min < 0) {
+            return "Min should be more than 0";
+        }
+        if (min > max) {
+            return "Max should be more than Min";
+        }
+        return "";
+    }
+
+    private GridBagConstraints getFilterPanelConstraints() {
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 0;
         c.gridy = 0;
+        c.anchor = GridBagConstraints.NORTH;
         c.insets = new Insets(0,10,0,10);
         c.weightx = 0.333;
+        return c;
+    }
 
-        JPanel p = new JPanel();
-        p.setBackground(Color.GRAY);
-        p.setPreferredSize(new Dimension(200, 510));
-        base.centerPanel.add(p, c);
-        c.gridx = 1;
-        c.weightx = 0.666;
+    private void setProjectsPanel() {
+        ArrayList<Project> projects = uiAgent.retrieveProjects(0, 9999999, 0, "");
+        projectsScrollPane = new JScrollPane();
+        projectsScrollPane.setViewportView(getViewPort(projects));
+        JPanel projectsPanel = new JPanel();
+        projectsPanel.setLayout(new GridLayout(1, 1));
+        projectsPanel.add(projectsScrollPane);
         projectsPanel.setPreferredSize(new Dimension(200, 510));
-        base.centerPanel.add(projectsPanel, c);
-        base.backButton.addActionListener(this);
-        base.topPanels[0][0].add(base.backButton);
-        base.frame.setVisible(true);
+        base.centerPanel.add(projectsPanel, getProjectPanelConstraints());
+    }
+
+    private GridBagConstraints getProjectPanelConstraints() {
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.gridy = 0;
+        c.anchor = GridBagConstraints.NORTH;
+        c.insets = new Insets(0,10,0,10);
+        c.weightx = 0.666;
+        return c;
     }
 
     private JPanel getViewPort(ArrayList<Project> projects) {
@@ -136,6 +304,9 @@ public class Home implements ActionListener {
             GridBagConstraints c = new GridBagConstraints();
 
             c.fill = GridBagConstraints.HORIZONTAL;
+            c.weightx = 1;
+            c.weighty = 1;
+            c.anchor = GridBagConstraints.WEST;
             c.gridwidth = 3;
             c.gridx = 0;
             c.gridy = 0;

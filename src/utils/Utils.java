@@ -1,5 +1,7 @@
 package src.utils;
 
+import javax.swing.*;
+import java.awt.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -23,11 +25,31 @@ public class Utils {
         return dateFormat.format(date);
     }
 
-    public static String concatWithCommas(ArrayList<Integer> items) {
+    public static String concatIntsWithCommas(ArrayList<Integer> items) {
         StringBuilder wordList = new StringBuilder();
         for (Integer word : items) {
             wordList.append(word + ",");
         }
         return new String(wordList.deleteCharAt(wordList.length() - 1));
+    }
+
+    public static String concatStrsWithCommas(ArrayList<String> items) {
+        StringBuilder wordList = new StringBuilder();
+        for (String word : items) {
+            wordList.append('"' + word + '"' + ",");
+        }
+        return new String(wordList.deleteCharAt(wordList.length() - 1));
+    }
+
+    public static JLabel getJLabel(String text, int fontSize) {
+        JLabel label = new JLabel(text);
+        label.setFont(new Font("Consolas", Font.PLAIN, fontSize));
+        return label;
+    }
+
+    public static JTextField getJTextField(int fontSize) {
+        JTextField field = new JTextField();
+        field.setFont(new Font("Consolas", Font.PLAIN, fontSize));
+        return field;
     }
 }

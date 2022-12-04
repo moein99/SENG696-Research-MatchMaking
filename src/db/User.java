@@ -2,14 +2,14 @@ package src.db;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import src.utils.Utils;
 
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.security.MessageDigest;
+import java.util.HashSet;
 
 import static src.utils.Utils.convertStringToDate;
 
@@ -79,6 +79,23 @@ public class User {
         }
         return user;
     }
+
+    public static ArrayList<User> get_bulk_with_ids(Connection db, ArrayList<Integer> ids) {
+        String query = "SELECT * FROM user WHERE id IN (" + Utils.concatIntsWithCommas(ids) + ")";
+
+        ArrayList<User> results = new ArrayList<>();
+
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                results.add(sqlToModel(rs));
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+        return results;
+    }
+
 
     public static JSONObject signupClient(Connection db, JSONObject data) {
         long user_id = -1;
@@ -274,5 +291,55 @@ public class User {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static ArrayList<User> getByPriceRange(Connection db, int min, int max) {
+        String query = "SELECT * FROM user WHERE hourly_compensation BETWEEN ? AND ?";
+
+        ArrayList<User> results = new ArrayList<>();
+
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            st.setInt(1, min);
+            st.setInt(2, max);
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                results.add(sqlToModel(rs));
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+        return results;
+    }
+
+    public static HashSet<Integer> getWithKeywords(Connection db, ArrayList<String> keywords) {
+        String query = "SELECT * FROM keyword WHERE text in (" + Utils.concatStrsWithCommas(keywords) + ")";
+
+        ArrayList<Integer> desiredKeywords = new ArrayList<>();
+
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                desiredKeywords.add(rs.getInt("id"));
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+
+        if (desiredKeywords.size() == 0) {
+            return new HashSet<>();
+        }
+        query = "SELECT * FROM userKeyword WHERE keyword_id in (" + Utils.concatIntsWithCommas(desiredKeywords) + ")";
+        HashSet<Integer> desiredUserIds = new HashSet<>();
+
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                desiredUserIds.add(rs.getInt("user_id"));
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+
+        return desiredUserIds;
     }
 }
