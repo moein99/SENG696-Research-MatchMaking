@@ -232,8 +232,6 @@ class BidAcceptBehaviour extends TickerBehaviour {
 
             handleBidsStatusUponAcceptance(acceptedBid);
             Contract.insert(myAgent.db, bidId);
-            // shouldn't be here
-//            handleProjectInitialization(acceptedBid);
 
             myAgent.sendMessage(
                     "",

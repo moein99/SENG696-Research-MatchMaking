@@ -30,7 +30,9 @@ public class Profile implements ActionListener {
     public Profile(UIAgent uiAgent, User visitorUser, int targetUserId, String back) {
         this.uiAgent = uiAgent;
         this.visitorUser = visitorUser;
-        this.visitorUser.refreshFromDB(uiAgent.db);
+        if (this.visitorUser != null) {
+            this.visitorUser.refreshFromDB(uiAgent.db);
+        }
         this.targetUserId = targetUserId;
         this.targetUser = User.get_with_id(uiAgent.db, targetUserId);
         this.back = back;

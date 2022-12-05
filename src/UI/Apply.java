@@ -77,6 +77,10 @@ public class Apply implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == base.backButton) {
+            base.frame.dispose();
+            new Home(uiAgent, user);
+        }
         if (e.getSource() == submitBtn) {
             String description = descriptionField.getText();
             String proposedAmount = proposedAmountField.getText();
