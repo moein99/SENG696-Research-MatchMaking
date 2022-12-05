@@ -259,7 +259,7 @@ public class User {
         String resumeAddress = obj.has("resume_address") ? obj.getString("name") : null;
         int hourlyCompensation = obj.getInt("hourly_compensation");
         boolean isVerified = obj.getBoolean("is_verified");
-        Date subscriptionEnds = convertStringToDate(obj.has("subscription_ends") ? obj.getString("name") : null);
+        Date subscriptionEnds = convertStringToDate(obj.has("subscription_ends") ? obj.getString("subscription_ends") : null);
         int balance = obj.getInt("balance");
 
         return new User(id, username, encryptedPassword, userType, name, website, logoAddress, resumeAddress, hourlyCompensation, isVerified, subscriptionEnds, balance);
@@ -383,5 +383,38 @@ public class User {
         this.resume_address = updatedUser.resume_address;
         this.is_verified = updatedUser.is_verified;
         this.subscription_ends = updatedUser.subscription_ends;
+    }
+
+    public ArrayList<String> getKeywords(Connection db) {
+        String query = "SELECT * FROM userKeyword WHERE user_id=?";
+
+        HashSet<Integer> keywordIds = new HashSet<>();
+
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            st.setInt(1, id);
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                keywordIds.add(rs.getInt("keyword_id"));
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+
+        ArrayList<String> keywords = new ArrayList<>();
+        if (keywordIds.size() == 0) {
+            return keywords;
+        }
+        query = "SELECT * FROM keyword WHERE id IN (" + Utils.concatIntsWithCommas(new ArrayList<>(keywordIds)) + ")";
+
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                keywords.add(rs.getString("text"));
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+
+        return keywords;
     }
 }

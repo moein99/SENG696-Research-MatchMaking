@@ -3,6 +3,7 @@ package src.db;
 import org.json.JSONObject;
 import src.utils.Utils;
 
+import java.security.PublicKey;
 import java.sql.*;
 import java.util.ArrayList;
 
@@ -106,7 +107,6 @@ public class Bid {
             System.out.println(ex.getMessage());
         }
         return results;
-
     }
 
     public static JSONObject insert(Connection db, JSONObject data) {
@@ -164,5 +164,30 @@ public class Bid {
         String status = rs.getString("status");
 
         return new Bid(id, bidderId, projectId, hourlyRate, status, description);
+    }
+
+    public static ArrayList<Bid> getClientBids(Connection db, int userId) {
+        String query = "SELECT * FROM bid WHERE status IN ('SP', 'A') AND bidder_id=?";
+
+        ArrayList<Bid> results = new ArrayList<>();
+
+        try (PreparedStatement st = db.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+            st.setInt(1, userId);
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                results.add(sqlToModel(rs));
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+        return results;
+    }
+
+    public String getContractStatus(Connection db) {
+        Contract contract = Contract.getWithBidId(db, id);
+        if (contract == null) {
+            return Contract.NOT_CREATED;
+        }
+        return contract.status();
     }
 }

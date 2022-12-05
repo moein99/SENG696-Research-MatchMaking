@@ -63,11 +63,12 @@ CREATE TABLE bid (
 
 CREATE TABLE contract (
     id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    bid_id int NOT NULL,
     provider_id int NOT NULL ,
     client_id int NOT NULL,
-    description varchar(255) NOT NULL ,
-    accepted_by_provider bool default NULL,
-    accepted_by_client bool default NULL,
+    description LONGTEXT NOT NULL ,
+    accepted_by_provider varchar(255) default "",
+    accepted_by_client varchar(255) default "",
     FOREIGN KEY (provider_id) REFERENCES user(id),
     FOREIGN KEY (client_id) REFERENCES user(id)
 );

@@ -168,10 +168,10 @@ public class UIAgent extends BaseAgent {
         return projects;
     }
 
-    public JSONObject getProviderOpenBids(int userId) {
+    public JSONObject getProviderActiveBids(int userId) {
         JSONObject data = new JSONObject();
         data.put("user_id", userId);
-        ACLMessage response = call(data, Constants.retrieveOpenBidsConversationID, Constants.contractServiceName, getInformTemplate(Constants.retrieveOpenBidsConversationID));
+        ACLMessage response = call(data, Constants.retrieveActiveBidsConversationID, Constants.contractServiceName, getInformTemplate(Constants.retrieveActiveBidsConversationID));
 
         return new JSONObject(response.getContent());
     }
@@ -261,5 +261,14 @@ public class UIAgent extends BaseAgent {
         data.put("user_id", id);
         data.put("premium_price", premiumPrice);
         call(data, Constants.purchaseSubscriptionConversationID, Constants.paymentServiceName, getInformTemplate(Constants.purchaseSubscriptionConversationID));
+    }
+
+    public void callForContractUpdate(int id, int bidId, boolean status) {
+        JSONObject data = new JSONObject();
+        data.put("user_id", id);
+        data.put("bid_id", bidId);
+        data.put("status", status);
+
+        call(data, Constants.contractUpdateConversationID, Constants.contractServiceName, getInformTemplate(Constants.contractUpdateConversationID));
     }
 }

@@ -1,21 +1,18 @@
 package src.UI;
 
 import src.agents.UIAgent;
-import src.db.Bid;
-import src.db.Feedback;
-import src.db.Project;
-import src.db.User;
+import src.db.*;
 import src.utils.Utils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 
 public class Home implements ActionListener {
     UIAgent uiAgent;
@@ -39,14 +36,14 @@ public class Home implements ActionListener {
             createProjectBtn.addActionListener(this);
             createProjectBtn.setFocusable(false);
             base.topPanels[0][topPanelCounter++].add(createProjectBtn);
-
-            showBidsBtn = new JButton("Incoming Bids");
-            showBidsBtn.addActionListener(this);
-            showBidsBtn.setFocusable(false);
-            base.topPanels[0][topPanelCounter++].add(showBidsBtn);
         }
 
         if (user != null) {
+            showBidsBtn = new JButton("My Bids");
+            showBidsBtn.addActionListener(this);
+            showBidsBtn.setFocusable(false);
+            base.topPanels[0][topPanelCounter++].add(showBidsBtn);
+
             showProjectsListBtn = new JButton("My Projects");
             showProjectsListBtn.addActionListener(this);
             showProjectsListBtn.setFocusable(false);
@@ -68,7 +65,7 @@ public class Home implements ActionListener {
 
     private void setFilterPanel() {
         JPanel p = new JPanel();
-        p.setBackground(Color.GRAY);
+        p.setBorder(new LineBorder(Color.BLACK,1,true));
         p.setPreferredSize(new Dimension(200, 510));
 
         p.setLayout(new GridBagLayout());
@@ -125,6 +122,18 @@ public class Home implements ActionListener {
                 responseLabel.setText(verificationResponse);
             }
         });
+
+        resetBtn.addActionListener(e -> {
+            ArrayList<Project> projects = uiAgent.retrieveProjects(0, 9999999, 0, "");
+            projectsScrollPane.setViewportView(getViewPort(projects));
+            minField.setText("");
+            maxField.setText("");
+            projectsDoneField.setText("");
+            keywordsField.setText("");
+        });
+
+        resetBtn.setFocusable(false);
+        filterBtn.setFocusable(false);
 
         c.gridy = 0;
         c.gridx = 0;
@@ -238,7 +247,7 @@ public class Home implements ActionListener {
         projectsScrollPane = new JScrollPane();
         projectsScrollPane.setViewportView(getViewPort(projects));
         JPanel projectsPanel = new JPanel();
-        projectsPanel.setLayout(new GridLayout(1, 1));
+        projectsPanel.setLayout(new GridLayout(1, 1, 20, 20));
         projectsPanel.add(projectsScrollPane);
         projectsPanel.setPreferredSize(new Dimension(200, 510));
         base.centerPanel.add(projectsPanel, getProjectPanelConstraints());
@@ -299,10 +308,17 @@ public class Home implements ActionListener {
 
     private void setProjectsComponents(ArrayList<Project> projects, JPanel cell) {
         for (Project project: projects) {
+            JPanel itemPanel = new JPanel();
+            itemPanel.setBackground(Color.WHITE);
+            itemPanel.setBorder(new LineBorder(Color.BLACK, 2,true));
+            itemPanel.setLayout(new GridBagLayout());
+
             JLabel titleLabel = Utils.getJLabel(project.title, 15);
             JLabel descriptionLabel = Utils.getJLabel(project.description, 15);
             JLabel deadlineLabel = Utils.getJLabel("Deadline: " + Utils.convertDateToString(project.deadline), 15);
             User owner = User.get_with_id(uiAgent.db, project.ownerId);
+            ArrayList<String> keywords = owner.getKeywords(uiAgent.db);
+            JLabel keywordsLabel = Utils.getJLabel("Keywords: " + Utils.concatStrsWithCommas(keywords), 12);
             JLabel providerLabel = new JLabel("Owner: " + owner.username);
             providerLabel.setForeground(new Color(0, 150, 255));
             if (owner.is_verified) {
@@ -319,9 +335,6 @@ public class Home implements ActionListener {
                     new Profile(uiAgent, user, project.ownerId, Profile.BACK_HOME);
                 }
             });
-            JPanel itemPanel = new JPanel();
-            itemPanel.setBorder(new EmptyBorder(10, 10,10,10));
-            itemPanel.setLayout(new GridBagLayout());
             GridBagConstraints c = new GridBagConstraints();
 
             c.fill = GridBagConstraints.HORIZONTAL;
@@ -343,12 +356,14 @@ public class Home implements ActionListener {
             c.gridy = 3;
             itemPanel.add(providerLabel, c);
 
+            c.gridy = 4;
+            itemPanel.add(keywordsLabel, c);
+
 
             if (user != null) {
-                c.gridy = 4;
+                c.gridy = 5;
                 JLabel hourlyCompensationLabel = new JLabel("Provider's hourly rate: " + User.get_with_id(uiAgent.db, project.ownerId).hourly_compensation + "$");
                 hourlyCompensationLabel.setFont(new Font("Consolas", Font.PLAIN, 12));
-                hourlyCompensationLabel.setBorder(new EmptyBorder(10, 10,10,10));
                 itemPanel.add(hourlyCompensationLabel, c);
             }
 
@@ -364,12 +379,11 @@ public class Home implements ActionListener {
 
                     c.gridwidth = 1;
                     c.gridx = 2;
-                    c.gridy = 4;
+                    c.gridy = 5;
                     itemPanel.add(applyBtn);
                 }
             }
 
-            itemPanel.setBackground(Color.GRAY);
             cell.add(itemPanel);
         }
     }
@@ -388,7 +402,7 @@ public class Home implements ActionListener {
 
         if (e.getSource() == showBidsBtn) {
             base.frame.dispose();
-            new ProviderBids(uiAgent, user);
+            new UserBids(uiAgent, user);
         }
 
         if (e.getSource() == showProjectsListBtn) {

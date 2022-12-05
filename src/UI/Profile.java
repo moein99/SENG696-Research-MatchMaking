@@ -9,6 +9,7 @@ import src.utils.Utils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -71,7 +72,8 @@ public class Profile implements ActionListener {
 
     private void setDetailsPanel(JSONArray feedbacks, GridBagConstraints detailsConstraints) {
         JPanel details = new JPanel();
-        details.setBackground(Color.GRAY);
+        details.setBorder(new LineBorder(Color.BLACK,1,true));
+        details.setBackground(Color.WHITE);
         details.setPreferredSize(new Dimension(300, 500));
         details.setLayout(new GridBagLayout());
 
@@ -192,9 +194,10 @@ public class Profile implements ActionListener {
         for (int i = 0; i < feedbacks.length(); i++) {
             JSONObject feedback = feedbacks.getJSONObject(i);
             JPanel itemPanel = new JPanel();
-            itemPanel.setBorder(new EmptyBorder(10, 10,10,10));
+            itemPanel.setBorder(new LineBorder(Color.BLACK, 1,true));
             itemPanel.setLayout(new GridLayout(2, 1));
-            itemPanel.setBackground(Color.GRAY);
+            itemPanel.setBackground(Color.WHITE);
+
 
             JLabel comment = new JLabel("Comment: " + feedback.getString("comment"));
             JLabel rate = new JLabel("Rate Given: " + feedback.getInt("rate"));
@@ -217,7 +220,7 @@ public class Profile implements ActionListener {
             if (back.equals(BACK_HOME)) {
                 new Home(uiAgent, visitorUser);
             } else if (back.equals(BACK_BIDS)) {
-                new ProviderBids(uiAgent, visitorUser);
+                new UserBids(uiAgent, visitorUser);
             }
         }
     }

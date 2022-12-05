@@ -14,7 +14,7 @@ public class Constants {
     public static final String projectCreationConversationID = "projectCreation";
     public static final String retrieveProjectsConversationID = "retrieveProjects";
     public static final String projectInitializationConversationID = "initializeProject";
-    public static final String retrieveOpenBidsConversationID = "retrieveOpenBids";
+    public static final String retrieveActiveBidsConversationID = "retrieveActiveBids";
     public static final String retrieveProjectsListConversationID = "retrieveProjectsList";
     public static final String bidCreationConversationID = "bidCreation";
     public static final String bidAcceptConversationID = "bidAccept";
@@ -28,4 +28,5 @@ public class Constants {
     public static final String feedbackCreationConversationID = "feedbackCreation";
     public static final String retrieveFeedbacksConversationID = "retrieveFeedback";
     public static final String purchaseSubscriptionConversationID = "purchaseSubscription";
+    public static final String contractUpdateConversationID = "contractUpdate";
 }

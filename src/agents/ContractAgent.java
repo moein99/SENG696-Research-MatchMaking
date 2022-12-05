@@ -6,10 +6,7 @@ import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import org.json.JSONObject;
-import src.db.Bid;
-import src.db.Project;
-import src.db.User;
-import src.db.Utils;
+import src.db.*;
 import src.utils.Constants;
 
 import java.sql.Connection;
@@ -31,8 +28,9 @@ public class ContractAgent extends BaseAgent {
             throw new RuntimeException(e);
         }
         addBehaviour(new BidCreationBehaviour(this));
-        addBehaviour(new RetrieveOpenBidsBehaviour(this, 100));
+        addBehaviour(new RetrieveActiveBidsBehaviour(this, 100));
         addBehaviour(new BidAcceptBehaviour(this, 100));
+        addBehaviour(new ContractUpdateBehaviour(this, 100));
     }
 }
 
@@ -70,10 +68,10 @@ class BidCreationBehaviour extends SimpleBehaviour {
     }
 }
 
-class RetrieveOpenBidsBehaviour extends TickerBehaviour {
+class RetrieveActiveBidsBehaviour extends TickerBehaviour {
     private ContractAgent myAgent;
 
-    public RetrieveOpenBidsBehaviour(Agent a, long period) {
+    public RetrieveActiveBidsBehaviour(Agent a, long period) {
         super(a, period);
         myAgent = (ContractAgent) a;
     }
@@ -82,29 +80,99 @@ class RetrieveOpenBidsBehaviour extends TickerBehaviour {
     protected void onTick() {
         MessageTemplate template = MessageTemplate.and(
                 MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
-                MessageTemplate.MatchConversationId(Constants.retrieveOpenBidsConversationID)
+                MessageTemplate.MatchConversationId(Constants.retrieveActiveBidsConversationID)
         );
 
         ACLMessage message = myAgent.receive(template);
         if (message != null) {
             JSONObject data = new JSONObject(message.getContent());
-            int userId = data.getInt("user_id");
-            JSONObject result = new JSONObject();
-            ArrayList<Project> userProjects = Project.getUserProjects(myAgent.db, userId, Project.CREATED);
-            ArrayList<Integer> projectIds = extractIds(userProjects);
-            if (projectIds.size() != 0) {
-                ArrayList<Bid> bids = Bid.getByProjectIds(myAgent.db, projectIds, Bid.SENT_TO_PROVIDER);
-                if (bids.size() != 0) {
-                    result = getBidsWithProjectName(userProjects, bids);
-                }
+            User user = User.get_with_id(myAgent.db, data.getInt("user_id"));
+            JSONObject merged;
+            if (user.user_type.equals(User.PROVIDER_TYPE)) {
+                merged = getProviderBids(data);
+            } else {
+                merged = getClientBids(data);
             }
+
             myAgent.sendMessage(
-                    result.toString(),
-                    Constants.retrieveOpenBidsConversationID,
+                    merged.toString(),
+                    Constants.retrieveActiveBidsConversationID,
                     ACLMessage.INFORM,
                     myAgent.searchForService(Constants.UIServiceName)
             );
         }
+    }
+
+    private JSONObject getClientBids(JSONObject data) {
+        int userId = data.getInt("user_id");
+        ArrayList<Bid> bids = Bid.getClientBids(myAgent.db, userId);
+        JSONObject result = new JSONObject();
+
+        for (Bid bid: bids) {
+            HashMap<String, String> map = new HashMap<>();
+            String contractStatus = bid.getContractStatus(myAgent.db);
+            if (contractStatus.equals(Contract.REJECTED) || contractStatus.equals(Contract.ACCEPTED_BY_BOTH)) {
+                continue;
+            }
+            map.put("project_title", Project.get_with_id(myAgent.db, bid.project_id).title);
+            map.put("bid_amount", String.valueOf(bid.hourly_rate));
+            map.put("bid_description", bid.description);
+            map.put("bidder_username", User.get_with_id(myAgent.db, bid.bidder_id).username);
+            map.put("bidder_id", String.valueOf(bid.bidder_id));
+            map.put("contract_status", bid.getContractStatus(myAgent.db));
+            result.put(String.valueOf(bid.id), map);
+        }
+
+        return result;
+    }
+
+    private JSONObject getProviderBids(JSONObject data) {
+        int userId = data.getInt("user_id");
+        ArrayList<Project> userProjects = Project.getUserProjects(myAgent.db, userId, Project.CREATED);
+        ArrayList<Integer> projectIds = extractIds(userProjects);
+        JSONObject sentToProviderBids = getSentToProviderBids(projectIds, userProjects);
+        JSONObject acceptedBids = getAcceptedBids(projectIds, userProjects);
+        JSONObject merged = new JSONObject(sentToProviderBids, JSONObject.getNames(sentToProviderBids));
+        if (acceptedBids.length() != 0) {
+            for (String key : JSONObject.getNames(acceptedBids)) {
+                merged.put(key, acceptedBids.get(key));
+            }
+        }
+        return merged;
+    }
+
+    private JSONObject getSentToProviderBids(ArrayList<Integer> projectIds, ArrayList<Project> userProjects) {
+        JSONObject result = new JSONObject();
+        if (projectIds.size() != 0) {
+            ArrayList<Bid> bids = Bid.getByProjectIds(myAgent.db, projectIds, Bid.SENT_TO_PROVIDER);
+            if (bids.size() != 0) {
+                result = getBidsWithProjectName(userProjects, bids);
+            }
+        }
+        return result;
+    }
+
+    private JSONObject getAcceptedBids(ArrayList<Integer> projectIds, ArrayList<Project> userProjects) {
+        JSONObject result = new JSONObject();
+        if (projectIds.size() != 0) {
+            ArrayList<Bid> bids = Bid.getByProjectIds(myAgent.db, projectIds, Bid.ACCEPTED);
+            if (bids.size() != 0) {
+                ArrayList<Bid> toBeRemoved = new ArrayList<>();
+                for (Bid bid : bids) {
+                    String contractStatus = bid.getContractStatus(myAgent.db);
+                    boolean first = contractStatus.equals(Contract.ACCEPTED_BY_BOTH);
+                    boolean second = contractStatus.equals(Contract.REJECTED);
+                    if (first || second) {
+                        toBeRemoved.add(bid);
+                    }
+                }
+                bids.removeAll(toBeRemoved);
+                if (bids.size() != 0) {
+                    return getBidsWithProjectName(userProjects, bids);
+                }
+            }
+        }
+        return result;
     }
 
     private JSONObject getBidsWithProjectName(ArrayList<Project> projects, ArrayList<Bid> bids) {
@@ -121,6 +189,7 @@ class RetrieveOpenBidsBehaviour extends TickerBehaviour {
                 data.put("bid_description", bid.description);
                 data.put("bidder_username", User.get_with_id(myAgent.db, bid.bidder_id).username);
                 data.put("bidder_id", String.valueOf(bid.bidder_id));
+                data.put("contract_status", bid.getContractStatus(myAgent.db));
                 result.put(String.valueOf(bid.id), data);
                 break;
             }
@@ -162,7 +231,9 @@ class BidAcceptBehaviour extends TickerBehaviour {
             Bid acceptedBid = Bid.getById(myAgent.db, bidId);
 
             handleBidsStatusUponAcceptance(acceptedBid);
-            handleProjectInitialization(acceptedBid);
+            Contract.insert(myAgent.db, bidId);
+            // shouldn't be here
+//            handleProjectInitialization(acceptedBid);
 
             myAgent.sendMessage(
                     "",
@@ -180,7 +251,60 @@ class BidAcceptBehaviour extends TickerBehaviour {
         ArrayList<Bid> allProjectBids = Bid.getByProjectId(myAgent.db, acceptedBid.project_id);
         ArrayList<Integer> bidIds = extractIds(allProjectBids);
         bidIds.remove((Integer) acceptedBid.id);
-        Bid.update_status(myAgent.db, bidIds, Bid.REJECTED);
+        if (bidIds.size() != 0) {
+            Bid.update_status(myAgent.db, bidIds, Bid.REJECTED);
+        }
+    }
+
+    private ArrayList<Integer> extractIds(ArrayList<Bid> projects) {
+        ArrayList<Integer> ids = new ArrayList<>();
+        for (Bid b :
+                projects) {
+            ids.add(b.id);
+        }
+
+        return ids;
+    }
+}
+
+class ContractUpdateBehaviour extends TickerBehaviour {
+    private ContractAgent myAgent;
+
+    public ContractUpdateBehaviour(Agent a, long period) {
+        super(a, period);
+        myAgent = (ContractAgent) a;
+    }
+
+    @Override
+    protected void onTick() {
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                MessageTemplate.MatchConversationId(Constants.contractUpdateConversationID)
+        );
+
+        ACLMessage message = myAgent.receive(template);
+        if (message != null) {
+            JSONObject data = new JSONObject(message.getContent());
+            int bidId = data.getInt("bid_id");
+            int userId = data.getInt("user_id");
+            boolean status = data.getBoolean("status");
+
+            Contract contract = Contract.getWithBidId(myAgent.db, bidId);
+            boolean isProvider = userId == contract.provider_id;
+            Contract.updateStatus(myAgent.db, contract.id, isProvider, status);
+
+            contract = Contract.getWithBidId(myAgent.db, bidId);
+            if (contract.accepted_by_provider.equals(Contract.ACCEPTED) && contract.accepted_by_client.equals(Contract.ACCEPTED)) {
+                handleProjectInitialization(Bid.getById(myAgent.db, bidId));
+            }
+
+            myAgent.sendMessage(
+                    "",
+                    Constants.contractUpdateConversationID,
+                    ACLMessage.INFORM,
+                    myAgent.searchForService(Constants.UIServiceName)
+            );
+        }
     }
 
     private void handleProjectInitialization(Bid acceptedBid) {
@@ -200,15 +324,5 @@ class BidAcceptBehaviour extends TickerBehaviour {
                 MessageTemplate.MatchConversationId(Constants.projectInitializationConversationID)
         );
         myAgent.blockingReceive(template);
-    }
-
-    private ArrayList<Integer> extractIds(ArrayList<Bid> projects) {
-        ArrayList<Integer> ids = new ArrayList<>();
-        for (Bid b :
-                projects) {
-            ids.add(b.id);
-        }
-
-        return ids;
     }
 }
