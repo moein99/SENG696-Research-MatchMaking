@@ -4,6 +4,7 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import org.json.JSONArray;
 import src.UI.Home;
+import src.UI.Launch;
 import src.db.Project;
 import src.db.User;
 import src.db.Utils;
@@ -29,8 +30,8 @@ public class UIAgent extends BaseAgent {
             throw new RuntimeException(e);
         }
         System.out.println("Starting UI agent, name: " + getName() + " local name: " + getLocalName());
-//        new Launch(this);
-        new Home(this, User.get_with_id(db, 41));
+        new Launch(this);
+//        new Home(this, User.get_with_id(db, 41));
     }
 
     private ACLMessage call(
