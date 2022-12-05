@@ -132,7 +132,10 @@ class RetrieveActiveBidsBehaviour extends TickerBehaviour {
         ArrayList<Integer> projectIds = extractIds(userProjects);
         JSONObject sentToProviderBids = getSentToProviderBids(projectIds, userProjects);
         JSONObject acceptedBids = getAcceptedBids(projectIds, userProjects);
-        JSONObject merged = new JSONObject(sentToProviderBids, JSONObject.getNames(sentToProviderBids));
+        JSONObject merged = new JSONObject();
+        if (sentToProviderBids.length() != 0) {
+            merged = new JSONObject(sentToProviderBids, JSONObject.getNames(sentToProviderBids));
+        }
         if (acceptedBids.length() != 0) {
             for (String key : JSONObject.getNames(acceptedBids)) {
                 merged.put(key, acceptedBids.get(key));
