@@ -95,6 +95,21 @@ public class Feedback {
         }
     }
 
+    public static float getUserApprovalRate(Connection db, User user) {
+        String query = "SELECT AVG(rate) FROM feedback WHERE receiver_id=?";
+
+        try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
+            st.setInt(1, user.id);
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                return rs.getFloat(1);
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+        return 0;
+    }
+
     public JSONObject json() {
         JSONObject data = new JSONObject();
         data.put("id", id);

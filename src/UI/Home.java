@@ -2,6 +2,7 @@ package src.UI;
 
 import src.agents.UIAgent;
 import src.db.Bid;
+import src.db.Feedback;
 import src.db.Project;
 import src.db.User;
 import src.utils.Utils;
@@ -14,6 +15,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class Home implements ActionListener {
     UIAgent uiAgent;
@@ -50,7 +52,7 @@ public class Home implements ActionListener {
             showProjectsListBtn.setFocusable(false);
             base.topPanels[0][topPanelCounter++].add(showProjectsListBtn);
 
-            showUserFeedbacksBtn = new JButton("My Feedbacks");
+            showUserFeedbacksBtn = new JButton("My Profile");
             showUserFeedbacksBtn.addActionListener(this);
             showUserFeedbacksBtn.setFocusable(false);
             base.topPanels[0][topPanelCounter++].add(showUserFeedbacksBtn);
@@ -256,25 +258,50 @@ public class Home implements ActionListener {
     private JPanel getViewPort(ArrayList<Project> projects) {
         JPanel cell = new JPanel();
         cell.setLayout(new GridLayout(0, 1, 20,20));
-        projects.sort((p1, p2) -> {
-            boolean p1Verified = p1.isOwnerVerified(uiAgent.db);
-            boolean p2Verified = p2.isOwnerVerified(uiAgent.db);
-            if ((p1Verified && p2Verified) || (!p1Verified && !p2Verified)) {
-                return 0;
-            } else if (p1Verified) {
-                return -1;
-            } else {
-                return 1;
-            }
-        });
 
+        ArrayList<Project> subscriptionProjects = new ArrayList<>();
+        ArrayList<Project> verifiedProjects = new ArrayList<>();
+        ArrayList<Project> normalProjects = new ArrayList<>();
+
+        for (Project project : projects) {
+            User owner = User.get_with_id(uiAgent.db, project.ownerId);
+            if (owner.isSubscriptionActive()) {
+                subscriptionProjects.add(project);
+                continue;
+            }
+            if (owner.is_verified) {
+                verifiedProjects.add(project);
+                continue;
+            }
+            normalProjects.add(project);
+        }
+
+        sortProjectsBasedOnApprovalRating(subscriptionProjects);
+        sortProjectsBasedOnApprovalRating(verifiedProjects);
+        sortProjectsBasedOnApprovalRating(normalProjects);
+
+        setProjectsComponents(subscriptionProjects, cell);
+        setProjectsComponents(verifiedProjects, cell);
+        setProjectsComponents(normalProjects, cell);
+
+        return cell;
+    }
+
+    private void sortProjectsBasedOnApprovalRating(ArrayList<Project> projects) {
+        projects.sort((p1, p2) -> {
+            User p1Owner = User.get_with_id(uiAgent.db, p1.ownerId);
+            User p2Owner = User.get_with_id(uiAgent.db, p2.ownerId);
+            float p1OwnerApprovalRate = Feedback.getUserApprovalRate(uiAgent.db, p1Owner);
+            float p2OwnerApprovalRate = Feedback.getUserApprovalRate(uiAgent.db, p2Owner);
+            return Float.compare(p2OwnerApprovalRate, p1OwnerApprovalRate);
+        });
+    }
+
+    private void setProjectsComponents(ArrayList<Project> projects, JPanel cell) {
         for (Project project: projects) {
-            JLabel titleLabel = new JLabel(project.title);
-            titleLabel.setFont(new Font("Consolas", Font.PLAIN, 20));
-            JLabel descriptionLabel = new JLabel(project.description);
-            descriptionLabel.setFont(new Font("Consolas", Font.PLAIN, 15));
-            JLabel deadlineLabel = new JLabel("Deadline: " + Utils.convertDateToString(project.deadline));
-            deadlineLabel.setFont(new Font("Consolas", Font.PLAIN, 12));
+            JLabel titleLabel = Utils.getJLabel(project.title, 15);
+            JLabel descriptionLabel = Utils.getJLabel(project.description, 15);
+            JLabel deadlineLabel = Utils.getJLabel("Deadline: " + Utils.convertDateToString(project.deadline), 15);
             User owner = User.get_with_id(uiAgent.db, project.ownerId);
             JLabel providerLabel = new JLabel("Owner: " + owner.username);
             providerLabel.setForeground(new Color(0, 150, 255));
@@ -289,15 +316,9 @@ public class Home implements ActionListener {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     base.frame.dispose();
-                    new History(uiAgent, user, project.ownerId, History.BACK_HOME);
+                    new Profile(uiAgent, user, project.ownerId, Profile.BACK_HOME);
                 }
             });
-
-            titleLabel.setBorder(new EmptyBorder(10, 10,10,10));
-            descriptionLabel.setBorder(new EmptyBorder(10, 10,10,10));
-            deadlineLabel.setBorder(new EmptyBorder(10, 10,10,10));
-            providerLabel.setBorder(new EmptyBorder(10, 10,10,10));
-
             JPanel itemPanel = new JPanel();
             itemPanel.setBorder(new EmptyBorder(10, 10,10,10));
             itemPanel.setLayout(new GridBagLayout());
@@ -306,6 +327,7 @@ public class Home implements ActionListener {
             c.fill = GridBagConstraints.HORIZONTAL;
             c.weightx = 1;
             c.weighty = 1;
+            c.insets = new Insets(10,10,10,10);
             c.anchor = GridBagConstraints.WEST;
             c.gridwidth = 3;
             c.gridx = 0;
@@ -350,8 +372,6 @@ public class Home implements ActionListener {
             itemPanel.setBackground(Color.GRAY);
             cell.add(itemPanel);
         }
-
-        return cell;
     }
 
     @Override
@@ -378,7 +398,7 @@ public class Home implements ActionListener {
 
         if (e.getSource() == showUserFeedbacksBtn) {
             base.frame.dispose();
-            new History(uiAgent, user, user.id, History.BACK_HOME);
+            new Profile(uiAgent, user, user.id, Profile.BACK_HOME);
         }
     }
 }

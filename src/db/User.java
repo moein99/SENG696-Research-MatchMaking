@@ -6,7 +6,9 @@ import src.utils.Utils;
 
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.security.MessageDigest;
 import java.util.HashSet;
@@ -29,6 +31,7 @@ public class User {
 
     public final static String CLIENT_TYPE = "C";
     public final static String PROVIDER_TYPE = "P";
+    public final static int SUBSCRIPTION_DURATION = 30;
 
     public User(
         int id,
@@ -281,12 +284,12 @@ public class User {
         return data;
     }
 
-    public static void addBalance(Connection db, int assigneeId, int amount) {
+    public static void addBalance(Connection db, int userId, int amount) {
         String query = "UPDATE user SET balance=balance + ? WHERE id=?";
 
         try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
             st.setInt(1, amount);
-            st.setInt(2, assigneeId);
+            st.setInt(2, userId);
             st.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -341,5 +344,44 @@ public class User {
         }
 
         return desiredUserIds;
+    }
+
+    public static void activatePremium(Connection db, int userId, int premiumPrice) {
+        String query = "UPDATE user SET balance=balance + ?, subscription_ends=? WHERE id=?";
+        User user = User.get_with_id(db, userId);
+        String timeStamp;
+        if (user.subscription_ends == null) {
+            Calendar currentTime = Calendar.getInstance();
+            currentTime.add(Calendar.DAY_OF_MONTH, SUBSCRIPTION_DURATION);
+            timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(currentTime.getTime());
+        } else {
+            return;
+        }
+
+        try (PreparedStatement st = db.prepareStatement(query, new String[] { "id" })) {
+            st.setInt(1, -premiumPrice);
+            st.setString(2, timeStamp);
+            st.setInt(3, userId);
+            st.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean isSubscriptionActive() {
+        if (subscription_ends == null) {
+            return false;
+        }
+        Calendar calendar = Calendar.getInstance();
+        return subscription_ends.after(calendar.getTime());
+    }
+
+    public void refreshFromDB(Connection db) {
+        User updatedUser = User.get_with_id(db, id);
+        this.balance = updatedUser.balance;
+        this.logo_address = updatedUser.logo_address;
+        this.resume_address = updatedUser.resume_address;
+        this.is_verified = updatedUser.is_verified;
+        this.subscription_ends = updatedUser.subscription_ends;
     }
 }

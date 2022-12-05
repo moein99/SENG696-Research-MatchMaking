@@ -1,6 +1,7 @@
 package src.agents;
 
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
@@ -27,21 +28,22 @@ public class PaymentAgent extends BaseAgent {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        addBehaviour(new MakeProjectPaymentBehaviour(this, 100));
+        addBehaviour(new MakeProjectPaymentBehaviour(this));
+        addBehaviour(new PurchaseSubscriptionBehaviour(this));
     }
 }
 
-class MakeProjectPaymentBehaviour extends TickerBehaviour {
+class MakeProjectPaymentBehaviour extends CyclicBehaviour {
     private PaymentAgent myAgent;
     final static double SYSTEM_RATE = 0.7;
 
-    public MakeProjectPaymentBehaviour(Agent a, long period) {
-        super(a, period);
+    public MakeProjectPaymentBehaviour(Agent a) {
+        super(a);
         myAgent = (PaymentAgent) a;
     }
 
     @Override
-    protected void onTick() {
+    public void action() {
         MessageTemplate template = MessageTemplate.and(
                 MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
                 MessageTemplate.MatchConversationId(Constants.makeProjectPaymentConversationID)
@@ -65,6 +67,38 @@ class MakeProjectPaymentBehaviour extends TickerBehaviour {
                     Constants.makeProjectPaymentConversationID,
                     ACLMessage.INFORM,
                     myAgent.searchForService(Constants.projectServiceName)
+            );
+        }
+    }
+}
+
+class PurchaseSubscriptionBehaviour extends CyclicBehaviour {
+    private PaymentAgent myAgent;
+
+    public PurchaseSubscriptionBehaviour(Agent a) {
+        super(a);
+        myAgent = (PaymentAgent) a;
+    }
+
+    @Override
+    public void action() {
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                MessageTemplate.MatchConversationId(Constants.purchaseSubscriptionConversationID)
+        );
+
+        ACLMessage message = myAgent.receive(template);
+        if (message != null) {
+            JSONObject data = new JSONObject(message.getContent());
+            int userId = data.getInt("user_id");
+            int premiumPrice = data.getInt("premium_price");
+            User.activatePremium(myAgent.db, userId, premiumPrice);
+
+            myAgent.sendMessage(
+                    "",
+                    Constants.purchaseSubscriptionConversationID,
+                    ACLMessage.INFORM,
+                    myAgent.searchForService(Constants.UIServiceName)
             );
         }
     }

@@ -1,6 +1,7 @@
 package src.agents;
 
 import jade.core.Agent;
+import jade.core.behaviours.SimpleBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
@@ -29,22 +30,22 @@ public class ContractAgent extends BaseAgent {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        addBehaviour(new BidCreationBehaviour(this, 100));
+        addBehaviour(new BidCreationBehaviour(this));
         addBehaviour(new RetrieveOpenBidsBehaviour(this, 100));
         addBehaviour(new BidAcceptBehaviour(this, 100));
     }
 }
 
-class BidCreationBehaviour extends TickerBehaviour {
+class BidCreationBehaviour extends SimpleBehaviour {
     private ContractAgent myAgent;
 
-    public BidCreationBehaviour(Agent a, long period) {
-        super(a, period);
+    public BidCreationBehaviour(Agent a) {
+        super(a);
         myAgent = (ContractAgent) a;
     }
 
     @Override
-    protected void onTick() {
+    public void action() {
         MessageTemplate template = MessageTemplate.and(
                 MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
                 MessageTemplate.MatchConversationId(Constants.bidCreationConversationID)
@@ -61,6 +62,11 @@ class BidCreationBehaviour extends TickerBehaviour {
                     myAgent.searchForService(Constants.UIServiceName)
             );
         }
+    }
+
+    @Override
+    public boolean done() {
+        return false;
     }
 }
 

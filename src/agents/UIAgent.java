@@ -30,7 +30,7 @@ public class UIAgent extends BaseAgent {
         }
         System.out.println("Starting UI agent, name: " + getName() + " local name: " + getLocalName());
 //        new Launch(this);
-        new Home(this, User.get_with_id(db, 42));
+        new Home(this, User.get_with_id(db, 41));
     }
 
     private ACLMessage call(
@@ -254,5 +254,12 @@ public class UIAgent extends BaseAgent {
         data.put("user_id", userId);
         ACLMessage response = call(data, Constants.retrieveFeedbacksConversationID, Constants.profileServiceName, getInformTemplate(Constants.retrieveFeedbacksConversationID));
         return new JSONArray(response.getContent());
+    }
+
+    public void callForSubscription(int id, int premiumPrice) {
+        JSONObject data = new JSONObject();
+        data.put("user_id", id);
+        data.put("premium_price", premiumPrice);
+        call(data, Constants.purchaseSubscriptionConversationID, Constants.paymentServiceName, getInformTemplate(Constants.purchaseSubscriptionConversationID));
     }
 }

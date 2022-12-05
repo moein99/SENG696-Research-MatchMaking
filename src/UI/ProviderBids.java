@@ -74,7 +74,7 @@ public class ProviderBids implements ActionListener {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     base.frame.dispose();
-                    new History(uiAgent, user, Integer.parseInt(openBids.getJSONObject(key).getString("bidder_id")), History.BACK_BIDS);
+                    new Profile(uiAgent, user, Integer.parseInt(openBids.getJSONObject(key).getString("bidder_id")), Profile.BACK_BIDS);
                 }
             });
             titleLabel.setFont(new Font("Consolas", Font.PLAIN, 20));
