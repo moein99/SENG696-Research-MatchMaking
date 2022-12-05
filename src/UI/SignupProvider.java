@@ -155,7 +155,7 @@ public class SignupProvider implements ActionListener {
                         hourlyCompensation,
                         keywords
                 );
-                if (jsonResponse.getBoolean("status") && jsonResponse.getLong("id") != -1) {
+                if (jsonResponse.getLong("id") != -1) {
                     responseLabel.setText("Please login now");
                     base.frame.dispose();
                     new Login(uiAgent);
